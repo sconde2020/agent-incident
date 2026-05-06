@@ -1,0 +1,545 @@
+{
+  "services": [
+    {
+      "id": "svc-001",
+      "name": "payments-api",
+      "display_name": "API Paiement",
+      "description": "Service de traitement des paiements (CB, PayPal, virement)",
+      "type": "api",
+      "language": "Python",
+      "team": "team-payments",
+      "owner": "julie.simon@company.com",
+      "business_criticality": "critical",
+      "sla_target_availability": 99.95,
+      "tier": 1,
+      "dependencies": ["catalog-service", "auth-service", "payments-db", "notification-service"],
+      "dependents": ["frontend-web", "mobile-app"],
+      "infrastructure": {
+        "host": "payments-api-prod-01",
+        "environment": "production",
+        "region": "eu-west-1",
+        "replicas": 3
+      }
+    },
+    {
+      "id": "svc-002",
+      "name": "orders-api",
+      "display_name": "API Commandes",
+      "description": "Service de gestion du cycle de vie des commandes",
+      "type": "api",
+      "language": "Java",
+      "team": "team-backend",
+      "owner": "marc.dubois@company.com",
+      "business_criticality": "critical",
+      "sla_target_availability": 99.9,
+      "tier": 1,
+      "dependencies": ["catalog-service", "auth-service", "inventory-service", "orders-db", "notification-service"],
+      "dependents": ["frontend-web", "mobile-app", "payments-api"],
+      "infrastructure": {
+        "host": "orders-api-prod-01",
+        "environment": "production",
+        "region": "eu-west-1",
+        "replicas": 2
+      }
+    },
+    {
+      "id": "svc-003",
+      "name": "auth-service",
+      "display_name": "Service Authentification",
+      "description": "Gestion des identités, JWT, SSO",
+      "type": "api",
+      "language": "Python",
+      "team": "team-security",
+      "owner": "nathalie.durand@company.com",
+      "business_criticality": "critical",
+      "sla_target_availability": 99.99,
+      "tier": 1,
+      "dependencies": ["auth-db", "redis-session"],
+      "dependents": ["payments-api", "orders-api", "catalog-service", "frontend-web", "mobile-app"],
+      "infrastructure": {
+        "host": "auth-service-prod-01",
+        "environment": "production",
+        "region": "eu-west-1",
+        "replicas": 4
+      }
+    },
+    {
+      "id": "svc-004",
+      "name": "catalog-service",
+      "display_name": "Service Catalogue",
+      "description": "Gestion du catalogue produits, prix, stocks affichés",
+      "type": "api",
+      "language": "Python",
+      "team": "team-catalog",
+      "owner": "pierre.thomas@company.com",
+      "business_criticality": "high",
+      "sla_target_availability": 99.9,
+      "tier": 2,
+      "dependencies": ["catalog-db", "redis-cache", "inventory-service"],
+      "dependents": ["payments-api", "orders-api", "frontend-web"],
+      "infrastructure": {
+        "host": "catalog-service-prod-01",
+        "environment": "production",
+        "region": "eu-west-1",
+        "replicas": 2
+      }
+    },
+    {
+      "id": "svc-005",
+      "name": "notification-service",
+      "display_name": "Service Notifications",
+      "description": "Envoi d'emails, SMS et push notifications",
+      "type": "worker",
+      "language": "Python",
+      "team": "team-backend",
+      "owner": "marc.dubois@company.com",
+      "business_criticality": "medium",
+      "sla_target_availability": 99.5,
+      "tier": 3,
+      "dependencies": ["notification-db", "smtp-relay", "firebase-fcm"],
+      "dependents": ["payments-api", "orders-api"],
+      "infrastructure": {
+        "host": "notification-workers-prod",
+        "environment": "production",
+        "region": "eu-west-1",
+        "replicas": 2
+      }
+    },
+    {
+      "id": "svc-006",
+      "name": "swift-gateway",
+      "display_name": "Passerelle SWIFTNet",
+      "description": "Gestion de la connectivité SWIFTNet FIN/InterAct/FileAct. Point d'entrée et de sortie de tous les messages SWIFT de la banque.",
+      "type": "gateway",
+      "language": "Java",
+      "team": "team-swift",
+      "owner": "pierre.martin@banque-swift.fr",
+      "business_criticality": "critical",
+      "sla_target_availability": 99.95,
+      "tier": 1,
+      "dependencies": ["swift-alliance", "swift-messages-db", "payment-hub"],
+      "dependents": ["fin-processor", "gpi-tracker", "mt-parser"],
+      "infrastructure": {
+        "host": "swift-gateway-prod-01",
+        "environment": "production",
+        "region": "eu-west-1",
+        "replicas": 2
+      }
+    },
+    {
+      "id": "svc-007",
+      "name": "fin-processor",
+      "display_name": "Processeur Messages FIN",
+      "description": "Traitement des messages SWIFT FIN (MT103, MT202, MT202COV, MT940, MT950). Gestion des files d'attente, ACK/NAK et déduplication UETR.",
+      "type": "worker",
+      "language": "Java",
+      "team": "team-swift",
+      "owner": "anne.durand@banque-swift.fr",
+      "business_criticality": "critical",
+      "sla_target_availability": 99.9,
+      "tier": 1,
+      "dependencies": ["swift-gateway", "swift-messages-db", "payment-hub", "mt-parser"],
+      "dependents": ["payment-hub", "gpi-tracker", "nostro-reconciliation"],
+      "infrastructure": {
+        "host": "fin-processor-prod-01",
+        "environment": "production",
+        "region": "eu-west-1",
+        "replicas": 3
+      }
+    },
+    {
+      "id": "svc-008",
+      "name": "sanctions-screening",
+      "display_name": "Filtrage Sanctions",
+      "description": "Contrôle des paiements contre les listes de sanctions internationales (OFAC, UE, ONU, GAFI). Service critique pour la conformité réglementaire.",
+      "type": "api",
+      "language": "Python",
+      "team": "team-compliance",
+      "owner": "sophie.bernard@banque-swift.fr",
+      "business_criticality": "critical",
+      "sla_target_availability": 99.99,
+      "tier": 1,
+      "dependencies": ["sanctions-db", "redis-sanctions-cache"],
+      "dependents": ["payment-hub", "fin-processor"],
+      "infrastructure": {
+        "host": "sanctions-screening-prod-01",
+        "environment": "production",
+        "region": "eu-west-1",
+        "replicas": 4
+      }
+    },
+    {
+      "id": "svc-009",
+      "name": "bic-validator",
+      "display_name": "Validateur BIC",
+      "description": "Validation des codes BIC/SWIFT des banques destinataires. Synchronisation hebdomadaire avec le répertoire officiel SWIFT BIC Directory.",
+      "type": "api",
+      "language": "Python",
+      "team": "team-swift",
+      "owner": "anne.durand@banque-swift.fr",
+      "business_criticality": "high",
+      "sla_target_availability": 99.9,
+      "tier": 2,
+      "dependencies": ["bic-directory-db", "redis-bic-cache"],
+      "dependents": ["payment-hub", "fin-processor", "payment-router"],
+      "infrastructure": {
+        "host": "bic-validator-prod-01",
+        "environment": "production",
+        "region": "eu-west-1",
+        "replicas": 2
+      }
+    },
+    {
+      "id": "svc-010",
+      "name": "gpi-tracker",
+      "display_name": "Tracker SWIFT gpi",
+      "description": "Suivi en temps réel des paiements SWIFT gpi (Global Payments Innovation). Gestion des statuts UETR (ACSP, ACCC, RJCT) et transmission des confirmations CAMT.054.",
+      "type": "api",
+      "language": "Python",
+      "team": "team-swift",
+      "owner": "marie.lefevre@banque-swift.fr",
+      "business_criticality": "high",
+      "sla_target_availability": 99.9,
+      "tier": 2,
+      "dependencies": ["swift-gateway", "swift-messages-db", "payment-hub"],
+      "dependents": ["portail-client", "fin-processor"],
+      "infrastructure": {
+        "host": "gpi-tracker-prod-01",
+        "environment": "production",
+        "region": "eu-west-1",
+        "replicas": 2
+      }
+    },
+    {
+      "id": "svc-011",
+      "name": "nostro-reconciliation",
+      "display_name": "Réconciliation Nostro",
+      "description": "Rapprochement automatique des comptes nostro à partir des relevés MT940/MT950 reçus des banques correspondantes. Détection des écarts et génération d'alertes.",
+      "type": "worker",
+      "language": "Python",
+      "team": "team-ops",
+      "owner": "thomas.petit@banque-swift.fr",
+      "business_criticality": "high",
+      "sla_target_availability": 99.5,
+      "tier": 2,
+      "dependencies": ["nostro-db", "fin-processor", "mt-parser"],
+      "dependents": ["liquidity-manager", "reporting-service"],
+      "infrastructure": {
+        "host": "nostro-reconciliation-prod-01",
+        "environment": "production",
+        "region": "eu-west-1",
+        "replicas": 1
+      }
+    },
+    {
+      "id": "svc-012",
+      "name": "payment-hub",
+      "display_name": "Hub de Paiements",
+      "description": "Orchestrateur central des paiements bancaires. Reçoit les ordres de paiement, applique les validations (sanctions, BIC, AML), détermine le canal d'émission (SWIFT, SEPA, Virement local) et pilote le traitement.",
+      "type": "api",
+      "language": "Java",
+      "team": "team-payments",
+      "owner": "jean.dupont@banque-swift.fr",
+      "business_criticality": "critical",
+      "sla_target_availability": 99.95,
+      "tier": 1,
+      "dependencies": ["sanctions-screening", "bic-validator", "payment-router", "swift-gateway", "swift-messages-db"],
+      "dependents": ["fin-processor", "gpi-tracker", "portail-client", "core-banking"],
+      "infrastructure": {
+        "host": "payment-hub-prod-01",
+        "environment": "production",
+        "region": "eu-west-1",
+        "replicas": 3
+      }
+    },
+    {
+      "id": "svc-013",
+      "name": "swift-alliance",
+      "display_name": "SWIFT Alliance Access",
+      "description": "Logiciel SWIFT Alliance Access – interface officielle d'accès au réseau SWIFTNet. Gère l'authentification PKI, la signature HSM des messages et les sessions FIN/InterAct.",
+      "type": "middleware",
+      "language": "C++",
+      "team": "team-infra",
+      "owner": "luc.moreau@banque-swift.fr",
+      "business_criticality": "critical",
+      "sla_target_availability": 99.99,
+      "tier": 1,
+      "dependencies": ["hsm-device", "swift-gateway"],
+      "dependents": ["swift-gateway", "fin-processor"],
+      "infrastructure": {
+        "host": "swift-alliance-prod-01",
+        "environment": "production",
+        "region": "eu-west-1",
+        "replicas": 2
+      }
+    },
+    {
+      "id": "svc-014",
+      "name": "mt-parser",
+      "display_name": "Parseur Messages MT",
+      "description": "Parsing et sérialisation des messages SWIFT au format MT (MT103, MT202, MT202COV, MT940, MT950, MT910, MT900, MT199). Validation de la syntaxe et des champs requis.",
+      "type": "library-service",
+      "language": "Java",
+      "team": "team-swift",
+      "owner": "anne.durand@banque-swift.fr",
+      "business_criticality": "high",
+      "sla_target_availability": 99.9,
+      "tier": 2,
+      "dependencies": ["swift-messages-db"],
+      "dependents": ["fin-processor", "nostro-reconciliation", "gpi-tracker"],
+      "infrastructure": {
+        "host": "mt-parser-prod-01",
+        "environment": "production",
+        "region": "eu-west-1",
+        "replicas": 2
+      }
+    },
+    {
+      "id": "svc-015",
+      "name": "payment-router",
+      "display_name": "Routeur de Paiements",
+      "description": "Moteur de routage des ordres de paiement. Détermine le canal optimal (SWIFT FIN, SEPA SCT, Virement domestique) et le correspondant bancaire selon les règles métier, les montants, les devises et les BIC destinataires.",
+      "type": "api",
+      "language": "Java",
+      "team": "team-payments",
+      "owner": "jean.dupont@banque-swift.fr",
+      "business_criticality": "critical",
+      "sla_target_availability": 99.95,
+      "tier": 1,
+      "dependencies": ["bic-validator", "correspondent-service", "swift-messages-db"],
+      "dependents": ["payment-hub", "fin-processor"],
+      "infrastructure": {
+        "host": "payment-router-prod-01",
+        "environment": "production",
+        "region": "eu-west-1",
+        "replicas": 2
+      }
+    },
+    {
+      "id": "svc-016",
+      "name": "liquidity-manager",
+      "display_name": "Gestionnaire de Liquidité",
+      "description": "Surveillance en temps réel des soldes nostro dans les banques correspondantes. Génère des alertes lorsqu'un compte nostro passe sous le seuil minimal. Interface avec le desk Treasury pour les appels de fonds.",
+      "type": "worker",
+      "language": "Python",
+      "team": "team-ops",
+      "owner": "thomas.petit@banque-swift.fr",
+      "business_criticality": "high",
+      "sla_target_availability": 99.5,
+      "tier": 2,
+      "dependencies": ["nostro-db", "nostro-reconciliation"],
+      "dependents": ["payment-hub", "alerting-service"],
+      "infrastructure": {
+        "host": "liquidity-manager-prod-01",
+        "environment": "production",
+        "region": "eu-west-1",
+        "replicas": 1
+      }
+    },
+    {
+      "id": "svc-017",
+      "name": "cut-off-manager",
+      "display_name": "Gestionnaire Cut-Off",
+      "description": "Gestion des fenêtres de traitement SWIFT (cut-off times). Déclenche les batchs d'émission à heure fixe (17h00 Paris), gère les paiements urgents hors cut-off et contrôle les délais de valeur.",
+      "type": "scheduler",
+      "language": "Python",
+      "team": "team-ops",
+      "owner": "thomas.petit@banque-swift.fr",
+      "business_criticality": "high",
+      "sla_target_availability": 99.9,
+      "tier": 2,
+      "dependencies": ["fin-processor", "payment-hub", "swift-messages-db"],
+      "dependents": ["fin-processor", "reporting-service"],
+      "infrastructure": {
+        "host": "cut-off-manager-prod-01",
+        "environment": "production",
+        "region": "eu-west-1",
+        "replicas": 1
+      }
+    },
+    {
+      "id": "svc-018",
+      "name": "correspondent-service",
+      "display_name": "Service Banques Correspondantes",
+      "description": "Référentiel des relations de correspondance bancaire : BIC, RMA (Relationship Management Application), comptes nostro associés, cut-off par correspondant et historique des rejets.",
+      "type": "api",
+      "language": "Python",
+      "team": "team-correspondent",
+      "owner": "celine.roux@banque-swift.fr",
+      "business_criticality": "high",
+      "sla_target_availability": 99.5,
+      "tier": 2,
+      "dependencies": ["nostro-db", "bic-directory-db"],
+      "dependents": ["payment-router", "payment-hub"],
+      "infrastructure": {
+        "host": "correspondent-service-prod-01",
+        "environment": "production",
+        "region": "eu-west-1",
+        "replicas": 1
+      }
+    }
+  ],
+  "databases": [
+    {
+      "id": "db-001",
+      "name": "catalog-db",
+      "type": "PostgreSQL",
+      "version": "15.2",
+      "host": "catalog-db-prod.internal",
+      "port": 5432,
+      "max_connections": 100,
+      "team": "team-dba",
+      "owner": "dba@company.com",
+      "business_criticality": "high"
+    },
+    {
+      "id": "db-002",
+      "name": "payments-db",
+      "type": "PostgreSQL",
+      "version": "15.2",
+      "host": "payments-db-prod.internal",
+      "port": 5432,
+      "max_connections": 200,
+      "team": "team-dba",
+      "owner": "dba@company.com",
+      "business_criticality": "critical"
+    },
+    {
+      "id": "db-003",
+      "name": "auth-db",
+      "type": "PostgreSQL",
+      "version": "15.2",
+      "host": "auth-db-prod.internal",
+      "port": 5432,
+      "max_connections": 150,
+      "team": "team-dba",
+      "owner": "dba@company.com",
+      "business_criticality": "critical"
+    },
+    {
+      "id": "db-004",
+      "name": "swift-messages-db",
+      "type": "PostgreSQL",
+      "version": "15.3",
+      "host": "swift-messages-db-prod.internal",
+      "port": 5432,
+      "max_connections": 300,
+      "team": "team-dba",
+      "owner": "dba@banque-swift.fr",
+      "business_criticality": "critical",
+      "description": "Stockage des messages SWIFT entrants et sortants, statuts d'acquittement, historique des traitements et journaux d'audit FIN."
+    },
+    {
+      "id": "db-005",
+      "name": "sanctions-db",
+      "type": "PostgreSQL",
+      "version": "15.3",
+      "host": "sanctions-db-prod.internal",
+      "port": 5432,
+      "max_connections": 100,
+      "team": "team-compliance",
+      "owner": "sophie.bernard@banque-swift.fr",
+      "business_criticality": "critical",
+      "description": "Base de données des listes de sanctions (OFAC SDN, EU Consolidated, ONU, GAFI). Mise à jour hebdomadaire automatisée. Accès restreint équipe Compliance."
+    },
+    {
+      "id": "db-006",
+      "name": "nostro-db",
+      "type": "PostgreSQL",
+      "version": "15.2",
+      "host": "nostro-db-prod.internal",
+      "port": 5432,
+      "max_connections": 80,
+      "team": "team-dba",
+      "owner": "thomas.petit@banque-swift.fr",
+      "business_criticality": "high",
+      "description": "Référentiel des comptes nostro : soldes, mouvements, statuts de réconciliation, historique des relevés MT940/MT950 reçus des correspondants."
+    },
+    {
+      "id": "db-007",
+      "name": "bic-directory-db",
+      "type": "PostgreSQL",
+      "version": "15.2",
+      "host": "bic-directory-db-prod.internal",
+      "port": 5432,
+      "max_connections": 50,
+      "team": "team-swift",
+      "owner": "anne.durand@banque-swift.fr",
+      "business_criticality": "high",
+      "description": "Répertoire local des codes BIC/SWIFT. Synchronisation hebdomadaire depuis le serveur officiel SWIFT BIC Directory. Contient 120 000 BIC actifs."
+    }
+  ],
+  "teams": [
+    {
+      "id": "team-payments",
+      "name": "Équipe Paiements",
+      "slack_channel": "#team-payments",
+      "oncall_email": "oncall-payments@company.com",
+      "services": ["payments-api", "payments-db"]
+    },
+    {
+      "id": "team-backend",
+      "name": "Équipe Backend",
+      "slack_channel": "#team-backend",
+      "oncall_email": "oncall-backend@company.com",
+      "services": ["orders-api", "notification-service"]
+    },
+    {
+      "id": "team-security",
+      "name": "Équipe Sécurité",
+      "slack_channel": "#team-security",
+      "oncall_email": "oncall-security@company.com",
+      "services": ["auth-service"]
+    },
+    {
+      "id": "team-catalog",
+      "name": "Équipe Catalogue",
+      "slack_channel": "#team-catalog",
+      "oncall_email": "oncall-catalog@company.com",
+      "services": ["catalog-service", "catalog-db"]
+    },
+    {
+      "id": "team-infra",
+      "name": "Équipe Infrastructure",
+      "slack_channel": "#team-infra",
+      "oncall_email": "oncall-infra@company.com",
+      "services": ["redis-cache", "redis-session", "smtp-relay", "swift-alliance"]
+    },
+    {
+      "id": "team-swift",
+      "name": "Équipe SWIFT & Paiements Internationaux",
+      "slack_channel": "#team-swift",
+      "oncall_email": "oncall-swift@banque-swift.fr",
+      "services": ["swift-gateway", "fin-processor", "bic-validator", "gpi-tracker", "mt-parser"],
+      "description": "Équipe responsable des flux SWIFT, de la connectivité SWIFTNet et du traitement des messages MT. Astreinte 24/7.",
+      "escalation_contact": "pierre.martin@banque-swift.fr"
+    },
+    {
+      "id": "team-compliance",
+      "name": "Équipe Conformité & Sanctions",
+      "slack_channel": "#team-compliance",
+      "oncall_email": "oncall-compliance@banque-swift.fr",
+      "services": ["sanctions-screening", "sanctions-db"],
+      "description": "Équipe Compliance responsable du filtrage sanctions, AML et conformité réglementaire SWIFT. Tout incident sanctions nécessite une notification immédiate.",
+      "escalation_contact": "sophie.bernard@banque-swift.fr"
+    },
+    {
+      "id": "team-ops",
+      "name": "Équipe Opérations Bancaires",
+      "slack_channel": "#team-ops",
+      "oncall_email": "oncall-ops@banque-swift.fr",
+      "services": ["nostro-reconciliation", "liquidity-manager", "cut-off-manager"],
+      "description": "Équipe opérationnelle gérant la réconciliation nostro, la liquidité et les traitements de fin de journée SWIFT.",
+      "escalation_contact": "thomas.petit@banque-swift.fr"
+    },
+    {
+      "id": "team-correspondent",
+      "name": "Équipe Relations Correspondants",
+      "slack_channel": "#team-correspondent",
+      "oncall_email": "oncall-correspondent@banque-swift.fr",
+      "services": ["correspondent-service"],
+      "description": "Gestion des relations de correspondance bancaire : RMA, comptes nostro, résolution des litiges et communication avec les banques partenaires.",
+      "escalation_contact": "celine.roux@banque-swift.fr"
+    }
+  ]
+}

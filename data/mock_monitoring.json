@@ -1,0 +1,413 @@
+{
+  "alerts": [
+    {
+      "id": "alert-001",
+      "service": "payments-api",
+      "severity": "critical",
+      "name": "HTTP 5xx rate > 50%",
+      "message": "Taux d'erreurs 503 dépasse 50% sur payments-api depuis 14h28",
+      "triggered_at": "2024-03-15T14:28:00Z",
+      "status": "firing",
+      "runbook_url": "docs/runbook_api_5xx.md"
+    },
+    {
+      "id": "alert-002",
+      "service": "orders-api",
+      "severity": "warning",
+      "name": "P99 latency > 5s",
+      "message": "Latence P99 = 8.3s sur orders-api (seuil : 5s)",
+      "triggered_at": "2024-03-15T09:05:00Z",
+      "status": "firing",
+      "runbook_url": "docs/runbook_api_latency.md"
+    },
+    {
+      "id": "alert-003",
+      "service": "catalog-db",
+      "severity": "critical",
+      "name": "PostgreSQL max_connections reached",
+      "message": "Connexions actives : 100/100. Nouvelles connexions refusées.",
+      "triggered_at": "2024-03-15T13:18:00Z",
+      "status": "firing",
+      "runbook_url": "docs/runbook_db_connection_pool.md"
+    },
+    {
+      "id": "alert-004",
+      "service": "auth-service",
+      "severity": "warning",
+      "name": "Error rate > 10%",
+      "message": "Taux d'erreurs 500 = 15% sur auth-service",
+      "triggered_at": "2024-03-15T11:50:00Z",
+      "status": "firing",
+      "runbook_url": "docs/runbook_api_5xx.md"
+    },
+    {
+      "id": "alert-005",
+      "service": "swift-gateway",
+      "severity": "critical",
+      "name": "SWIFTNet FIN connectivity lost",
+      "message": "Aucune session FIN active depuis 08h10. Connectivité SWIFTNet interrompue. Messages sortants bloqués.",
+      "triggered_at": "2024-04-10T08:10:00Z",
+      "status": "firing",
+      "runbook_url": "docs/runbook_swift_fin_indisponible.md",
+      "labels": {
+        "domain": "swift",
+        "impact": "payment_processing",
+        "sla_risk": "critical"
+      }
+    },
+    {
+      "id": "alert-006",
+      "service": "fin-processor",
+      "severity": "critical",
+      "name": "FIN queue backlog > 200 messages",
+      "message": "Queue FIN : 220 messages MT103 en attente (seuil critique : 200). Débit traitement tombé à 0 msg/min.",
+      "triggered_at": "2024-04-10T09:28:00Z",
+      "status": "firing",
+      "runbook_url": "docs/runbook_swift_fin_indisponible.md",
+      "labels": {
+        "domain": "swift",
+        "impact": "outbound_payments",
+        "queue_size": 220
+      }
+    },
+    {
+      "id": "alert-007",
+      "service": "sanctions-screening",
+      "severity": "critical",
+      "name": "Sanctions screening response time > 20s",
+      "message": "Temps de réponse moyen sanctions-screening = 28.4s (SLO : 2s). Mode dégradé activé automatiquement.",
+      "triggered_at": "2024-04-09T10:42:00Z",
+      "status": "firing",
+      "runbook_url": "docs/runbook_sanctions_screening.md",
+      "labels": {
+        "domain": "compliance",
+        "impact": "payment_screening",
+        "degraded_mode": true
+      }
+    },
+    {
+      "id": "alert-008",
+      "service": "nostro-reconciliation",
+      "severity": "warning",
+      "name": "Nostro reconciliation unmatched transactions > 0",
+      "message": "3 transactions non rapprochées sur compte nostro USD CITIUS33. Écart total : 1 250 000 USD.",
+      "triggered_at": "2024-04-08T06:55:00Z",
+      "status": "firing",
+      "runbook_url": "docs/runbook_nostro_reconciliation.md",
+      "labels": {
+        "domain": "treasury",
+        "correspondent": "CITIUS33",
+        "currency": "USD",
+        "gap_amount": 1250000
+      }
+    },
+    {
+      "id": "alert-009",
+      "service": "gpi-tracker",
+      "severity": "warning",
+      "name": "GPI payments pending confirmation > 30min",
+      "message": "65 paiements gpi en statut ACSP depuis > 30 minutes. SLA gpi tracker de 30 min dépassé.",
+      "triggered_at": "2024-04-07T16:02:00Z",
+      "status": "firing",
+      "runbook_url": "docs/runbook_swift_fin_indisponible.md",
+      "labels": {
+        "domain": "swift",
+        "impact": "gpi_sla",
+        "pending_count": 65
+      }
+    },
+    {
+      "id": "alert-010",
+      "service": "liquidity-manager",
+      "severity": "critical",
+      "name": "Nostro account below minimum threshold",
+      "message": "Compte nostro EUR DEUTDEDB : solde 3.2 M EUR < seuil minimal 5 M EUR. Risque rejet paiements sortants.",
+      "triggered_at": "2024-04-04T08:22:00Z",
+      "status": "firing",
+      "runbook_url": "docs/runbook_nostro_reconciliation.md",
+      "labels": {
+        "domain": "treasury",
+        "correspondent": "DEUTDEDB",
+        "currency": "EUR",
+        "current_balance_eur": 3200000,
+        "threshold_eur": 5000000
+      }
+    },
+    {
+      "id": "alert-011",
+      "service": "payment-hub",
+      "severity": "critical",
+      "name": "Payment-hub P99 latency > 10s",
+      "message": "Latence P99 payment-hub = 15.2s (SLO : 1s). 200 paiements en attente de traitement.",
+      "triggered_at": "2024-04-05T10:03:00Z",
+      "status": "firing",
+      "runbook_url": "docs/runbook_api_latency.md",
+      "labels": {
+        "domain": "swift",
+        "impact": "all_swift_payments",
+        "queue_depth": 200
+      }
+    },
+    {
+      "id": "alert-012",
+      "service": "swift-alliance",
+      "severity": "warning",
+      "name": "SWIFT PKI certificate expiry in 7 days",
+      "message": "Certificat PKI SWIFTNet swift-alliance-prod-01 expire le 2024-04-15. Action requise sous 5 jours.",
+      "triggered_at": "2024-04-03T00:00:00Z",
+      "status": "firing",
+      "runbook_url": "docs/runbook_swift_fin_indisponible.md",
+      "labels": {
+        "domain": "security",
+        "certificate_cn": "BANKFR-SWIFT-PROD-01",
+        "expiry_date": "2024-04-15",
+        "days_remaining": 5
+      }
+    },
+    {
+      "id": "alert-013",
+      "service": "cut-off-manager",
+      "severity": "critical",
+      "name": "EOD batch cut-off failed",
+      "message": "Batch cut-off 17h00 non déclenché. 340 paiements en statut QUEUED non émis. Intervention manuelle requise.",
+      "triggered_at": "2024-04-06T17:06:00Z",
+      "status": "firing",
+      "runbook_url": "docs/runbook_swift_fin_indisponible.md",
+      "labels": {
+        "domain": "operations",
+        "impact": "eod_processing",
+        "queued_payments": 340
+      }
+    },
+    {
+      "id": "alert-014",
+      "service": "bic-validator",
+      "severity": "warning",
+      "name": "BIC validation error rate > 5%",
+      "message": "Taux d'erreurs BIC validator = 12% sur les 30 dernières minutes. 45 paiements rejetés avec BIC_VALIDATION_FAILED.",
+      "triggered_at": "2024-04-09T14:05:00Z",
+      "status": "firing",
+      "runbook_url": "docs/runbook_swift_fin_indisponible.md",
+      "labels": {
+        "domain": "swift",
+        "impact": "outbound_payments",
+        "rejected_bics": ["DEUTDEDB", "BNPAFRPP", "BARCGB22"]
+      }
+    },
+    {
+      "id": "alert-015",
+      "service": "fin-processor",
+      "severity": "warning",
+      "name": "MT202COV ACK timeout > 3h",
+      "message": "80 messages MT202COV sans ACK depuis > 3 heures. Possible perte de messages ou congestion réseau SWIFT.",
+      "triggered_at": "2024-04-08T12:20:00Z",
+      "status": "firing",
+      "runbook_url": "docs/runbook_swift_fin_indisponible.md",
+      "labels": {
+        "domain": "swift",
+        "message_type": "MT202COV",
+        "pending_ack_count": 80
+      }
+    }
+  ],
+  "metrics": [
+    {
+      "service": "payments-api",
+      "timestamp": "2024-03-15T14:30:00Z",
+      "cpu_percent": 72,
+      "memory_percent": 65,
+      "error_rate_percent": 54,
+      "p50_latency_ms": 280,
+      "p99_latency_ms": 4200,
+      "requests_per_second": 340
+    },
+    {
+      "service": "orders-api",
+      "timestamp": "2024-03-15T09:10:00Z",
+      "cpu_percent": 48,
+      "memory_percent": 70,
+      "error_rate_percent": 3,
+      "p50_latency_ms": 1200,
+      "p99_latency_ms": 8300,
+      "requests_per_second": 120
+    },
+    {
+      "service": "auth-service",
+      "timestamp": "2024-03-15T11:55:00Z",
+      "cpu_percent": 35,
+      "memory_percent": 80,
+      "error_rate_percent": 15,
+      "p50_latency_ms": 95,
+      "p99_latency_ms": 620,
+      "requests_per_second": 890
+    },
+    {
+      "service": "catalog-service",
+      "timestamp": "2024-03-15T13:20:00Z",
+      "cpu_percent": 25,
+      "memory_percent": 55,
+      "error_rate_percent": 42,
+      "p50_latency_ms": 3100,
+      "p99_latency_ms": 9800,
+      "requests_per_second": 210
+    },
+    {
+      "service": "swift-gateway",
+      "timestamp": "2024-04-10T08:20:00Z",
+      "cpu_percent": 12,
+      "memory_percent": 38,
+      "error_rate_percent": 100,
+      "p50_latency_ms": 0,
+      "p99_latency_ms": 0,
+      "requests_per_second": 0,
+      "custom_metrics": {
+        "fin_sessions_active": 0,
+        "fin_sessions_target": 2,
+        "messages_sent_last_hour": 0,
+        "messages_received_last_hour": 0,
+        "swiftnet_link_status": "DOWN"
+      }
+    },
+    {
+      "service": "fin-processor",
+      "timestamp": "2024-04-10T09:35:00Z",
+      "cpu_percent": 8,
+      "memory_percent": 55,
+      "error_rate_percent": 100,
+      "p50_latency_ms": 0,
+      "p99_latency_ms": 0,
+      "requests_per_second": 0,
+      "custom_metrics": {
+        "queue_size_current": 220,
+        "queue_size_max": 1200,
+        "messages_processed_last_hour": 0,
+        "mt103_pending": 220,
+        "mt202_pending": 0,
+        "ack_pending": 0
+      }
+    },
+    {
+      "service": "sanctions-screening",
+      "timestamp": "2024-04-09T10:50:00Z",
+      "cpu_percent": 95,
+      "memory_percent": 88,
+      "error_rate_percent": 0,
+      "p50_latency_ms": 25800,
+      "p99_latency_ms": 31000,
+      "requests_per_second": 8,
+      "custom_metrics": {
+        "screening_mode": "DEGRADED",
+        "ofac_list_version": "2024-04-01",
+        "eu_list_version": "2024-04-01",
+        "payments_screened_today": 420,
+        "payments_blocked_today": 3,
+        "false_positive_rate_percent": 0.7
+      }
+    },
+    {
+      "service": "payment-hub",
+      "timestamp": "2024-04-05T10:10:00Z",
+      "cpu_percent": 68,
+      "memory_percent": 72,
+      "error_rate_percent": 0,
+      "p50_latency_ms": 18200,
+      "p99_latency_ms": 22100,
+      "requests_per_second": 45,
+      "custom_metrics": {
+        "queue_depth": 200,
+        "payments_processed_today": 1850,
+        "payments_pending": 200,
+        "high_value_payments_pending": 12,
+        "urgent_payments_pending": 8
+      }
+    },
+    {
+      "service": "gpi-tracker",
+      "timestamp": "2024-04-07T16:05:00Z",
+      "cpu_percent": 45,
+      "memory_percent": 60,
+      "error_rate_percent": 8,
+      "p50_latency_ms": 850,
+      "p99_latency_ms": 3200,
+      "requests_per_second": 22,
+      "custom_metrics": {
+        "gpi_payments_active": 65,
+        "gpi_payments_acsp": 65,
+        "gpi_payments_accc": 0,
+        "confirmations_sent_last_hour": 0,
+        "avg_confirmation_delay_min": 48
+      }
+    },
+    {
+      "service": "nostro-reconciliation",
+      "timestamp": "2024-04-08T07:05:00Z",
+      "cpu_percent": 22,
+      "memory_percent": 40,
+      "error_rate_percent": 0,
+      "p50_latency_ms": 450,
+      "p99_latency_ms": 1200,
+      "requests_per_second": 5,
+      "custom_metrics": {
+        "reconciliation_status": "INCOMPLETE",
+        "accounts_reconciled": 8,
+        "accounts_with_gaps": 1,
+        "total_unmatched_transactions": 3,
+        "total_gap_usd": 1250000
+      }
+    },
+    {
+      "service": "bic-validator",
+      "timestamp": "2024-04-09T14:10:00Z",
+      "cpu_percent": 18,
+      "memory_percent": 35,
+      "error_rate_percent": 12,
+      "p50_latency_ms": 45,
+      "p99_latency_ms": 280,
+      "requests_per_second": 55,
+      "custom_metrics": {
+        "bic_directory_version": "2024-04-08",
+        "bic_directory_entries": 119847,
+        "cache_hit_rate_percent": 94,
+        "validation_errors_last_hour": 45,
+        "most_rejected_bic": "DEUTDEDB"
+      }
+    },
+    {
+      "service": "liquidity-manager",
+      "timestamp": "2024-04-04T08:25:00Z",
+      "cpu_percent": 10,
+      "memory_percent": 28,
+      "error_rate_percent": 0,
+      "p50_latency_ms": 120,
+      "p99_latency_ms": 380,
+      "requests_per_second": 3,
+      "custom_metrics": {
+        "accounts_monitored": 12,
+        "accounts_below_threshold": 1,
+        "accounts_near_threshold": 2,
+        "critical_alerts_active": 1,
+        "nostro_eur_balance": 3200000,
+        "nostro_usd_balance": 45800000,
+        "nostro_gbp_balance": 8200000
+      }
+    },
+    {
+      "service": "swift-alliance",
+      "timestamp": "2024-04-03T16:00:00Z",
+      "cpu_percent": 8,
+      "memory_percent": 42,
+      "error_rate_percent": 0,
+      "p50_latency_ms": 35,
+      "p99_latency_ms": 95,
+      "requests_per_second": 28,
+      "custom_metrics": {
+        "hsm_status": "OK",
+        "hsm_sessions_active": 4,
+        "hsm_sessions_max": 8,
+        "certificate_expiry_days": 5,
+        "fin_sessions_active": 2,
+        "messages_signed_today": 1842
+      }
+    }
+  ]
+}

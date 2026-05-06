@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem \"c:\\\\Users\\\\admin\\\\openai\\\\projet-qualification-incident\\\\tickets\\\\sous-tickets\" -File | ForEach-Object { $_.Name } | Sort-Object)"
+    ]
+  }
+}
