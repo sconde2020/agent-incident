@@ -11,7 +11,6 @@ from pydantic import ValidationError
 
 from agent import Agent, AgentError
 from config import Config, setup_logging
-from db.incidents import IncidentDB
 from db.models import IncidentCreated, IncidentOut
 from security.auth import require_auth, set_api_key
 from security.input_validator import validate_incident_input
@@ -101,7 +100,7 @@ async def qualify_incident(request: Request, payload: dict) -> IncidentOut:
     if not _INC_RE.match(incident_id):
         raise HTTPException(status_code=400, detail="Format d'identifiant invalide (attendu INCxxxxxxx)")
 
-    raw = IncidentDB(_config.db_path).get(incident_id)
+    raw = _agent.incident_db.get(incident_id)
     if not raw:
         raise HTTPException(status_code=404, detail=f"Incident {incident_id} non trouvé. Créez-le d'abord via POST /create.")
 
@@ -137,9 +136,8 @@ async def create_incident(request: Request, payload: dict) -> IncidentCreated:
         logger.warning("api.create.validation_error errors=%s request_id=%s", exc, request_id)
         raise HTTPException(status_code=422, detail=exc.errors())
 
-    db = IncidentDB(_config.db_path)
     try:
-        created = db.create(validated.model_dump(exclude_none=False))
+        created = _agent.incident_db.create(validated.model_dump(exclude_none=False))
     except Exception as exc:
         logger.error("api.create.db_error error=%s request_id=%s", exc, request_id)
         raise HTTPException(status_code=500, detail="Erreur lors de la création de l'incident")
@@ -153,8 +151,7 @@ async def get_incident(incident_id: str) -> dict:
     if not _INC_RE.match(incident_id):
         raise HTTPException(status_code=400, detail="Format d'identifiant invalide (attendu INCxxxxxxx)")
 
-    db = IncidentDB(_config.db_path)
-    incident = db.get(incident_id)
+    incident = _agent.incident_db.get(incident_id)
     if not incident:
         raise HTTPException(status_code=404, detail=f"Incident {incident_id} non trouvé")
     return incident

@@ -62,77 +62,73 @@ class IncidentDB:
     def update_qualification(self, incident_id: str, qualification: dict) -> None:
         """Persister la qualification produite par l'agent."""
         now = datetime.utcnow().isoformat()
+        action = (
+            f"Qualifié : {qualification.get('priority')} | "
+            f"{qualification.get('category')} → {qualification.get('assigned_to')}"
+        )
         with self._conn() as conn:
-            conn.execute(
-                """
-                UPDATE incidents SET
-                    priority = ?, category = ?, subcategory = ?, assigned_to = ?,
-                    confidence_score = ?, is_duplicate = ?, duplicate_of = ?,
-                    is_major_incident = ?, qualification_failed = ?, updated_at = ?
-                WHERE id = ?
-                """,
-                (
-                    qualification.get("priority"),
-                    qualification.get("category"),
-                    qualification.get("subcategory"),
-                    qualification.get("assigned_to"),
-                    qualification.get("confidence_score"),
-                    1 if qualification.get("is_duplicate") else 0,
-                    qualification.get("duplicate_of"),
-                    1 if qualification.get("is_major_incident") else 0,
-                    1 if qualification.get("qualification_failed") else 0,
-                    now,
-                    incident_id,
-                ),
-            )
-            # Tracer la qualification dans l'historique de l'incident
-            action = (
-                f"Qualifié : {qualification.get('priority')} | "
-                f"{qualification.get('category')} → {qualification.get('assigned_to')}"
-            )
+            self._execute_qualification_update(conn, incident_id, qualification, now)
             conn.execute(
                 "INSERT INTO incident_history (incident_id, at, action, by) VALUES (?,?,?,?)",
                 (incident_id, now, action, "agent-qualification"),
             )
             conn.commit()
-
         logger.info("incidents.qualification_saved incident_id=%s", incident_id)
+
+    def _execute_qualification_update(
+        self, conn: sqlite3.Connection, incident_id: str, qualification: dict, now: str
+    ) -> None:
+        conn.execute(
+            """
+            UPDATE incidents SET
+                priority = ?, category = ?, subcategory = ?, assigned_to = ?,
+                confidence_score = ?, is_duplicate = ?, duplicate_of = ?,
+                is_major_incident = ?, qualification_failed = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            (
+                qualification.get("priority"), qualification.get("category"),
+                qualification.get("subcategory"), qualification.get("assigned_to"),
+                qualification.get("confidence_score"),
+                1 if qualification.get("is_duplicate") else 0,
+                qualification.get("duplicate_of"),
+                1 if qualification.get("is_major_incident") else 0,
+                1 if qualification.get("qualification_failed") else 0,
+                now, incident_id,
+            ),
+        )
 
     def create(self, incident: dict) -> dict:
         """Insérer un nouvel incident brut en base et retourner la ligne créée."""
         now = datetime.utcnow().isoformat()
         inc_id = incident.get("id") or f"INC{random.randint(1000000, 9999999)}"
         created_at = incident.get("created_at") or now
-
         with self._conn() as conn:
-            conn.execute(
-                """
-                INSERT INTO incidents
-                    (id, title, description, status, priority, category, subcategory,
-                     service, reported_by, assigned_to, created_at, updated_at, sla_breach_at)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
-                """,
-                (
-                    inc_id,
-                    incident["title"],
-                    incident.get("description"),
-                    incident.get("status", "open"),
-                    incident.get("priority"),
-                    incident.get("category"),
-                    incident.get("subcategory"),
-                    incident["service"],
-                    incident.get("reported_by"),
-                    incident.get("assigned_to"),
-                    created_at,
-                    now,
-                    incident.get("sla_breach_at"),
-                ),
-            )
+            self._insert_incident_row(conn, inc_id, incident, created_at, now)
             conn.execute(
                 "INSERT INTO incident_history (incident_id, at, action, by) VALUES (?,?,?,?)",
                 (inc_id, now, "Incident créé via API", "api"),
             )
             conn.commit()
-
         logger.info("incidents.created incident_id=%s service=%s", inc_id, incident.get("service"))
         return {**incident, "id": inc_id, "created_at": created_at, "updated_at": now}
+
+    def _insert_incident_row(
+        self, conn: sqlite3.Connection, inc_id: str, incident: dict, created_at: str, now: str
+    ) -> None:
+        conn.execute(
+            """
+            INSERT INTO incidents
+                (id, title, description, status, priority, category, subcategory,
+                 service, reported_by, assigned_to, created_at, updated_at, sla_breach_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+            """,
+            (
+                inc_id, incident["title"], incident.get("description"),
+                incident.get("status", "open"), incident.get("priority"),
+                incident.get("category"), incident.get("subcategory"),
+                incident["service"], incident.get("reported_by"),
+                incident.get("assigned_to"), created_at, now,
+                incident.get("sla_breach_at"),
+            ),
+        )
