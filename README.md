@@ -161,14 +161,93 @@ curl -X POST http://localhost:8080/qualify \
 
 ---
 
+## Docker
+
+Les fichiers Docker sont regroupés dans le dossier [`docker/`](docker/).
+
+### Build
+
+```bash
+# Depuis la racine du projet
+docker build -f docker/Dockerfile -t agent-incident .
+```
+
+### Lancer le conteneur
+
+```bash
+docker run -d \
+  --name agent-incident \
+  -p 8000:8000 \
+  -v incident-data:/data \
+  -e OPENAI_API_KEY=$OPENAI_API_KEY \
+  -e API_KEY=$API_KEY \
+  agent-incident
+```
+
+Le volume `/data` persiste la base SQLite et ChromaDB entre les redémarrages.  
+Au premier démarrage, `docker/docker-entrypoint.sh` exécute `python main.py init` automatiquement si la DB est absente.
+
+### Variables d'environnement Docker
+
+Les variables listées dans [Variables d'environnement](#variables-denvironnement-env) peuvent toutes être passées via `-e` ou un fichier `--env-file .env`.
+
+---
+
+## Tests
+
+### Prérequis
+
+```bash
+pip install pytest
+```
+
+Les tests unitaires n'ont pas besoin de clé API. Les tests d'intégration et de qualité appellent le LLM réel et requièrent `OPENAI_API_KEY` dans `.env`.
+
+### Tests unitaires (sans LLM, sans réseau)
+
+60 tests couvrant tous les outils et la mémoire conversationnelle, entièrement mockés.
+
+```bash
+python -m pytest tests/test_unitaires.py -v
+```
+
+### Tests d'intégration (LLM réel + SQLite)
+
+22 tests vérifiant les mécaniques du pipeline (CMDB, monitoring, doublons, routing) et la mémoire de session. Les tests sans LLM passent même sans clé API.
+
+```bash
+python -m pytest tests/test_integration.py -v -m integration
+```
+
+### Tests de qualité — LLM-as-Judge (LLM réel + RAG réel)
+
+11 questions évaluées par un juge LLM (gpt-4o) sur 3 critères : Pertinence, Fidélité, Cohérence. Génère `tests/rapport_qualite.md` à la fin.
+
+```bash
+# Initialiser la DB et le RAG si ce n'est pas encore fait
+python main.py init
+
+python -m pytest tests/test_qualite.py -v -s
+```
+
+Score cible : ≥ 3.5 / 5.0 globalement, ≥ 3.0 par question.
+
+### Tout lancer
+
+```bash
+python -m pytest tests/ -v
+```
+
+---
+
 ## Structure du projet
 
 ```
-incident-agent/
+agent-incident/
 ├── main.py                  # CLI (init, qualify, serve)
 ├── api.py                   # API FastAPI
-├── agent.py                 # Orchestrateur – pipeline en 9 étapes
-├── llm.py                   # Client OpenAI
+├── agent.py                 # Orchestrateur – pipeline de qualification
+├── llm.py                   # Client LLM (Anthropic SDK)
 ├── config.py                # Configuration (pydantic-settings)
 │
 ├── db/                      # Couche SQLite
@@ -190,7 +269,7 @@ incident-agent/
 │   ├── retriever.py         # Recherche sémantique
 │   └── prompts.py           # Templates système et classification
 │
-├── tools/                   # Outils de l'agent
+├── tools/                   # Outils de l'agent (function calling)
 │   ├── search_cmdb.py
 │   ├── search_monitoring.py
 │   ├── search_incidents.py
@@ -198,10 +277,45 @@ incident-agent/
 │   ├── detect_major_incident.py
 │   ├── classify.py
 │   ├── route.py
+│   ├── create_incident.py
 │   └── update_incident.py
 │
+├── memory/                  # Mémoire conversationnelle de session
+│   └── store.py
+│
+├── tests/                   # Suite de tests
+│   ├── conftest.py          # Fixtures partagées
+│   ├── test_unitaires.py    # 60 tests unitaires (mockés, sans LLM)
+│   ├── test_integration.py  # 22 tests d'intégration (SQLite réel)
+│   ├── test_qualite.py      # LLM-as-Judge (LLM + RAG réels)
+│   ├── questions.json       # Questions pour les tests de qualité
+│   ├── rapport_unitaires.md
+│   ├── rapport_integration.md
+│   └── rapport_qualite.md
+│
+├── docker/                  # Fichiers Docker
+│   ├── Dockerfile
+│   ├── docker-entrypoint.sh # Init DB au premier démarrage
+│   └── docker-rapport.md
+│
 ├── data/                    # Données mock (incidents, CMDB, monitoring)
+│   ├── mock_incidents.json
+│   ├── mock_cmdb.json
+│   └── mock_monitoring.json
+│
 ├── docs/                    # Runbooks, post-mortems, FAQ (indexés dans Chroma)
+│   ├── runbook_swift_fin_indisponible.md
+│   ├── runbook_api_5xx.md
+│   ├── runbook_api_latency.md
+│   ├── runbook_db_connection_pool.md
+│   ├── runbook_nostro_reconciliation.md
+│   ├── runbook_sanctions_screening.md
+│   ├── postmortem_paiement_2024_03.md
+│   ├── postmortem_swift_cut_off_2024_02.md
+│   ├── faq_incidents_courants.md
+│   └── faq_paiements_swift.md
+│
+├── .dockerignore
 ├── .env.example             # Template de configuration
 └── requirements.txt
 ```

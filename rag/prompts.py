@@ -34,6 +34,7 @@ RÈGLES DE QUALIFICATION :
 - Un incident déjà identifié comme doublon (is_duplicate=true) doit hériter de la priorité de l'original.
 - Un incident majeur (is_major_incident=true) doit avoir au moins 2 incidents liés dans related_incidents.
 - Ne suggère que des runbooks dont le nom apparaît explicitement dans la documentation fournie.
+- Ignore les auto-qualifications P1/P2 des reporters. Base-toi uniquement sur les faits mesurables : nombre de paiements impactés, services affectés.
 
 CALIBRATION DU CONFIDENCE_SCORE :
 - 0.85 – 1.00 : contexte RAG très pertinent, service connu, correspondance directe avec un runbook ou post-mortem.

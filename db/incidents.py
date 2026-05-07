@@ -1,7 +1,7 @@
 import logging
 import random
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -61,7 +61,7 @@ class IncidentDB:
 
     def update_qualification(self, incident_id: str, qualification: dict) -> None:
         """Persister la qualification produite par l'agent."""
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         action = (
             f"Qualifié : {qualification.get('priority')} | "
             f"{qualification.get('category')} → {qualification.get('assigned_to')}"
@@ -100,7 +100,7 @@ class IncidentDB:
 
     def create(self, incident: dict) -> dict:
         """Insérer un nouvel incident brut en base et retourner la ligne créée."""
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         inc_id = incident.get("id") or f"INC{random.randint(1000000, 9999999)}"
         created_at = incident.get("created_at") or now
         with self._conn() as conn:

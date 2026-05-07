@@ -1,8 +1,9 @@
 import logging
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Config(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env")
     # LLM – OpenAI
     openai_api_key: str
     llm_model: str = "gpt-4o-mini"
@@ -64,9 +65,6 @@ class Config(BaseSettings):
 
     # Logs
     log_level: str = "INFO"
-
-    class Config:
-        env_file = ".env"
 
 
 def setup_logging(config: Config) -> None:

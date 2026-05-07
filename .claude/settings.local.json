@@ -4,7 +4,20 @@
       "PowerShell(Get-ChildItem \"c:\\\\Users\\\\admin\\\\openai\\\\projet-qualification-incident\\\\tickets\\\\sous-tickets\" -File | ForEach-Object { $_.Name } | Sort-Object)",
       "Bash(python -c ' *)",
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\admin\\\\openai\\\\incident-agent\" -Recurse -File -Include \"*.py\")",
-      "Bash(Select-Object -ExpandProperty FullName)"
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(python -m pytest tests/test_unitaires.py -v)",
+      "Bash(python -m pytest tests/test_integration.py -v -m integration)",
+      "Bash(python -m pytest tests/test_integration.py -v -m integration --tb=short)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\admin\\\\openai\\\\incident-agent\\\\data\\\\\" -ErrorAction SilentlyContinue | Select-Object Name)",
+      "Bash(python -m pytest tests/test_qualite.py -v -s)",
+      "Bash(python -m pytest tests/test_qualite.py::TestQualiteAgent::test_score_global_moyen -v -s)",
+      "Bash(dir \"c:\\\\Users\\\\admin\\\\openai\\\\incident-agent\" /b)",
+      "Bash(PowerShell -Command \"Select-String -Path 'c:\\\\Users\\\\admin\\\\openai\\\\incident-agent\\\\main.py' -Pattern 'port|host|serve|uvicorn|8080|8000'\")",
+      "Bash(PowerShell -Command \"Get-Content 'c:\\\\Users\\\\admin\\\\openai\\\\incident-agent\\\\db\\\\init_db.py'\")",
+      "Bash(docker build *)",
+      "PowerShell(docker rm -f mon-agent 2>$null; $key = \\(Get-Content \"c:\\\\Users\\\\admin\\\\openai\\\\incident-agent\\\\.env\" -ErrorAction SilentlyContinue | Select-String \"OPENAI_API_KEY=\"\\).ToString\\(\\).Split\\(\"=\",2\\)[1]; docker run -d -p 8000:8000 -e \"OPENAI_API_KEY=$key\" -e \"API_KEY=testkey\" --name mon-agent agent-incident:v1; Start-Sleep -Seconds 5; docker ps --filter \"name=mon-agent\" --format \"table {{.Names}}\\\\t{{.Status}}\")",
+      "PowerShell($health = Invoke-WebRequest -Uri \"http://localhost:8000/health\" -UseBasicParsing; Write-Host \"STATUS: $\\($health.StatusCode\\)\"; $health.Content)",
+      "PowerShell($body = '{\"id\": \"INC0001042\"}'; $qualify = Invoke-WebRequest -Uri \"http://localhost:8000/qualify\" -Method POST -Headers @{\"Authorization\"=\"Bearer testkey\"; \"Content-Type\"=\"application/json\"} -Body $body -UseBasicParsing; Write-Host \"STATUS: $\\($qualify.StatusCode\\)\"; $qualify.Content | ConvertFrom-Json | ConvertTo-Json -Depth 5)"
     ]
   }
 }

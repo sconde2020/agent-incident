@@ -1,7 +1,7 @@
 import json
 import logging
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ class AuditLogger:
                     incident_id, action,
                     json.dumps(result) if result else None,
                     duration_ms, model, confidence, error,
-                    datetime.utcnow().isoformat(),
+                    datetime.now(timezone.utc).isoformat(),
                 ),
             )
             conn.commit()

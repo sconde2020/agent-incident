@@ -36,6 +36,67 @@ tools/         → outils LLM (function calling) — un fichier = un outil
 db/            → couche données SQLite — un fichier = un domaine
 rag/           → ingestion + recherche sémantique (Chroma)
 security/      → auth, audit, validation entrées/sorties LLM
+memory/        → mémoire conversationnelle de session
+```
+
+### Structure des fichiers
+
+```text
+agent-incident/
+├── main.py
+├── api.py
+├── agent.py
+├── llm.py
+├── config.py
+│
+├── db/
+│   ├── schema.sql
+│   ├── init_db.py
+│   ├── incidents.py
+│   ├── monitoring.py
+│   ├── cmdb.py
+│   └── models.py
+│
+├── security/
+│   ├── auth.py
+│   ├── audit.py
+│   ├── input_validator.py
+│   └── output_validator.py
+│
+├── rag/
+│   ├── ingest.py
+│   ├── retriever.py
+│   └── prompts.py
+│
+├── tools/
+│   ├── search_cmdb.py
+│   ├── search_monitoring.py
+│   ├── search_incidents.py
+│   ├── detect_duplicate.py
+│   ├── detect_major_incident.py
+│   ├── classify.py
+│   ├── route.py
+│   ├── create_incident.py
+│   └── update_incident.py
+│
+├── memory/
+│   └── store.py
+│
+├── tests/
+│   ├── conftest.py
+│   ├── test_unitaires.py
+│   ├── test_integration.py
+│   ├── test_qualite.py
+│   └── questions.json
+│
+├── docker/
+│   ├── Dockerfile
+│   └── docker-entrypoint.sh
+│
+├── data/                    # mock: incidents, CMDB, monitoring
+├── docs/                    # runbooks, post-mortems, FAQ (Chroma)
+├── .env.example
+└── requirements.txt
 ```
 
 ### Flux d'exécution d'une qualification

@@ -1,7 +1,7 @@
 import logging
 import time
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from config import Config
@@ -73,7 +73,7 @@ class Agent:
         request_id = str(uuid.uuid4())[:8]
         start_time = time.monotonic()
         # Générer un ID si l'incident n'en a pas (cas payload JSON inline)
-        incident_id = incident.id or f"INC{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+        incident_id = incident.id or f"INC{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
         logger.info(
             "agent.qualify.start incident_id=%s service=%s request_id=%s",
             incident_id, incident.service, request_id,
