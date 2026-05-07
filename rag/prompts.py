@@ -70,6 +70,9 @@ INCIDENTS SIMILAIRES RÉCENTS :
 DÉTECTION DOUBLON : {duplicate_info}
 DÉTECTION INCIDENT MAJEUR : {major_incident_info}
 
+MÉMOIRE DE SESSION (qualifications récentes — utilise pour détecter des patterns récurrents) :
+{memory_context}
+
 Retourne ce JSON (aucun texte avant ou après) :
 {{
   "priority": "P1|P2|P3|P4",

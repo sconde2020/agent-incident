@@ -53,6 +53,8 @@ class Config(BaseSettings):
     # En dessous de ce seuil, le résultat est marqué comme incertain
     confidence_low_threshold: float = 0.5
     duplicate_confidence_score: float = 0.95
+    # Nombre maximum d'entrées conservées dans la mémoire conversationnelle
+    max_memory: int = 10
 
     # Fallback conservateur quand la qualification LLM échoue ou pour les doublons
     fallback_priority: str = "P3"

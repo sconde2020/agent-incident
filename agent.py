@@ -6,6 +6,7 @@ from typing import Optional
 
 from config import Config
 from db.incidents import IncidentDB
+from memory.store import ConversationMemory, MemoryEntry
 from db.monitoring import MonitoringDB
 from db.cmdb import CMDB
 from db.models import IncidentIn, IncidentOut
@@ -64,6 +65,8 @@ class Agent:
         self.tool_update = UpdateIncident(self.incident_db)
         # Audit
         self.audit = AuditLogger(config.db_path)
+        # Mémoire conversationnelle de session
+        self.memory = ConversationMemory(config.max_memory)
 
     def qualify(self, incident: IncidentIn) -> IncidentOut:
         """Point d'entrée public. Retourne un IncidentOut enrichi ou lève AgentError."""
@@ -81,6 +84,7 @@ class Agent:
             self._audit_qualify_failure(incident_id, exc, start_time, request_id)
             raise AgentError(f"Qualification échouée pour {incident_id}: {exc}") from exc
         self._audit_qualify_success(incident_id, result, start_time, request_id)
+        self._add_to_memory(result, incident_id)
         return result
 
     def _audit_qualify_failure(
@@ -112,6 +116,19 @@ class Agent:
             result.confidence_score, duration_ms, request_id,
         )
 
+    def _add_to_memory(self, result: IncidentOut, incident_id: str) -> None:
+        self.memory.add(MemoryEntry(
+            incident_id=incident_id,
+            service=result.service,
+            title=result.title,
+            priority=result.priority,
+            category=result.category,
+            assigned_to=result.assigned_to,
+            confidence_score=result.confidence_score,
+            is_duplicate=result.is_duplicate,
+            is_major_incident=result.is_major_incident,
+        ))
+
     # ─── Pipeline privé ───────────────────────────────────────────────────────
 
     def _run_pipeline(
@@ -132,6 +149,7 @@ class Agent:
             "cmdb": cmdb_info, "monitoring": monitoring_info,
             "rag_docs": rag_docs, "similar_incidents": similar,
             "duplicate": duplicate_info, "major_incident": major_info,
+            "memory": self.memory.to_context(),
         }
         raw_output = self.llm.classify(inc_dict, context)
         self._reconcile_llm_output(raw_output, duplicate_info, major_info)

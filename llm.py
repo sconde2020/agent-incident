@@ -44,6 +44,7 @@ class LLMClient:
             similar_incidents=_fmt_similar(context.get("similar_incidents", []), cfg.llm_context_similar_incidents_limit),
             duplicate_info=_fmt_duplicate(context.get("duplicate")),
             major_incident_info=_fmt_major(context.get("major_incident")),
+            memory_context=_fmt_memory(context.get("memory", [])),
         )
 
     def _call_api(self, prompt: str, incident_id: str):
@@ -138,3 +139,14 @@ def _fmt_major(major: Optional[dict]) -> str:
         return "Non"
     svcs = ", ".join(major.get("affected_services", []))
     return f"OUI – {len(major.get('affected_services', []))} services affectés : {svcs}"
+
+
+def _fmt_memory(entries: list) -> str:
+    if not entries:
+        return "Aucune qualification dans la session courante."
+    lines = [
+        f"• {e['incident_id']} [{e['priority']}] {e['service']} → {e['assigned_to']}"
+        f" ({e['category']}, conf={e['confidence_score']:.2f})"
+        for e in entries
+    ]
+    return "\n".join(lines)
