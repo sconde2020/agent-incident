@@ -18,17 +18,52 @@ VALID_SUBCATEGORIES = {
 
 _INC_RE = re.compile(r"^INC\d{7}$")
 
-# Patterns d'hallucinations LLM connus
+# Patterns d'hallucinations LLM : artefacts de template et refus inattendus
 _HALLUCINATION_RE = re.compile(
-    r"example\.com|I am an AI|As an AI|<tool_call>|TOOL_NAME",
+    r"example\.com"
+    r"|I am an AI|As an AI language model|I cannot fulfill|I cannot provide"
+    r"|<tool_call>|TOOL_NAME|\[INST\]|<\|system\|>|<\|im_start\|>|<\|im_end\|>"
+    r"|\n\nHuman\s*:|\n\nAssistant\s*:"
+    r"|je suis un assistant IA|en tant qu'IA",
     re.IGNORECASE,
 )
 
-# Données sensibles qui ne doivent jamais apparaître dans une suggestion de résolution
+# Données sensibles : patterns avec valeur effective (pas les seuls noms de champs)
 _SENSITIVE_OUTPUT_RE = re.compile(
-    r"api[_-]?key|bearer\s+[A-Za-z0-9]+|password\s*=|[A-Z]{2}\d{2}[A-Z0-9]{4}\d{7,19}",
+    # Identifiants financiers
+    r"\b[A-Z]{2}\d{2}[A-Z0-9]{4}\d{7,19}\b"           # IBAN
+    r"|(?:\d{4}[- ]){3}\d{4}"                            # carte bancaire
+    # Credentials avec signe = (valeur présente)
+    r"|password\s*=\s*['\"]?\S"
+    r"|mot\s*de\s*passe\s*=\s*['\"]?\S"                  # français
+    r"|api[_-]?key\s*=\s*['\"]?\S"
+    r"|cl[eé][_-]?(?:api|secr[eè]te?)\s*=\s*['\"]?\S"   # clé API/secrète
+    r"|secret\s*=\s*['\"]?\w{8,}"
+    r"|token\s*=\s*['\"]?[A-Za-z0-9\-._~+/]{16,}"
+    r"|jeton\s*=\s*['\"]?\S{8,}"                         # français
+    # En-têtes d'authentification portant leur valeur
+    r"|Bearer\s+[A-Za-z0-9\-._~+/]{10,}=*"
+    # Matériel cryptographique (PEM blocks)
+    r"|-----BEGIN\s+(?:RSA\s+|EC\s+|OPENSSH\s+)?PRIVATE\s+KEY"
+    r"|-----BEGIN\s+CERTIFICATE",
     re.IGNORECASE,
 )
+
+VALID_TEAMS = {
+    "team-swift", "team-infra", "team-payments", "team-compliance",
+    "team-ops", "team-correspondent", "team-security", "team-backend",
+    "support-helpdesk",
+}
+
+
+def _sanitize_text(text: str, field: str) -> str:
+    if _SENSITIVE_OUTPUT_RE.search(text):
+        logger.warning("output_validator.sensitive_data field=%s", field)
+        return "[Contenu supprimé : données sensibles détectées]"
+    if _HALLUCINATION_RE.search(text):
+        logger.warning("output_validator.hallucination_detected field=%s", field)
+        return "[Contenu supprimé : artefact LLM détecté]"
+    return text
 
 
 class QualificationResult(BaseModel):
@@ -84,6 +119,13 @@ class QualificationResult(BaseModel):
         # Rejeter silencieusement tout ID qui ne respecte pas le format INCxxxxxxx
         return [x for x in (v or []) if _INC_RE.match(str(x))]
 
+    @field_validator("assigned_to")
+    @classmethod
+    def check_assigned_to(cls, v):
+        if v not in VALID_TEAMS:
+            raise ValueError(f"assigned_to '{v}' hors liste autorisée")
+        return v
+
     @field_validator("runbooks_suggested", mode="before")
     @classmethod
     def filter_runbooks(cls, v):
@@ -96,18 +138,17 @@ class QualificationResult(BaseModel):
             safe.append(rb)
         return safe
 
+    @field_validator("monitoring_alerts", mode="before")
+    @classmethod
+    def sanitize_alerts(cls, v):
+        return [_sanitize_text(a, "monitoring_alert") for a in (v or []) if a]
+
     @field_validator("resolution_hint")
     @classmethod
     def sanitize_resolution_hint(cls, v):
         if v is None:
             return v
-        if _SENSITIVE_OUTPUT_RE.search(v):
-            logger.warning("output_validator.sensitive_data_in_hint")
-            return "[Suggestion supprimée : données sensibles détectées]"
-        if _HALLUCINATION_RE.search(v):
-            logger.warning("output_validator.hallucination_detected")
-            return "[Suggestion supprimée : contenu suspect]"
-        return v
+        return _sanitize_text(v, "resolution_hint")
 
     @model_validator(mode="after")
     def check_consistency(self):

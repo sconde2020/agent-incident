@@ -17,27 +17,62 @@ VALID_SUBCATEGORIES = {
     "Certificats", "Réseau", "Accès",
 }
 
-# Patterns d'injection de prompt issus des vecteurs d'attaque connus
+# Patterns d'injection de prompt — vecteurs anglais et français
 _PROMPT_INJECTION_RE = re.compile(
+    # ── Anglais ──────────────────────────────────────────────────────────────
     r"ignore\s+(previous|all|above|prior)\s+instructions?"
     r"|\[INST\]"
     r"|<\|system\|>"
     r"|<\|im_start\|>"
+    r"|<\|im_end\|>"
     r"|jailbreak"
     r"|DAN\s+mode"
-    r"|act\s+as\s+(if|though)",
+    r"|act\s+as\s+(if|though)"
+    r"|you\s+are\s+now\s+(a\s+)?(?:an?\s+)?\w+"       # "you are now a …"
+    r"|pretend\s+(you\s+are|to\s+be)"
+    r"|disregard\s+(all|any|previous)\s+instructions?"
+    r"|new\s+instructions?\s*:"
+    r"|system\s*prompt\s*:"
+    # ── Français ─────────────────────────────────────────────────────────────
+    r"|ignore\s+(les\s+)?(instructions?|consignes?)\s+(précédentes?|ci-dessus|antérieures?)"
+    r"|oublie\s+(tout|les\s+instructions?|tes\s+instructions?)"
+    r"|tu\s+es\s+maintenant\s+(un|une)?\s*\w+"         # "tu es maintenant un …"
+    r"|fais\s+semblant\s+d['']être"
+    r"|joue\s+le\s+r[oô]le\s+de"
+    r"|nouvelles?\s+instructions?\s*:"
+    r"|ignore\s+ce\s+qui\s+précède"
+    r"|désactive\s+(les\s+)?(filtres?|restrictions?|règles?)"
+    r"|contourne\s+(les\s+)?(règles?|restrictions?|sécurités?)"
+    r"|réponds?\s+sans\s+(filtre|restriction|limite)",
     re.IGNORECASE,
 )
 
 # Patterns de données sensibles à détecter dans les descriptions
 # re.IGNORECASE appliqué globalement – Python 3.14 interdit (?i) hors position 0
 _SENSITIVE_RE = re.compile(
-    r"\b[A-Z]{2}\d{2}[A-Z0-9]{4}\d{7,19}\b"  # IBAN
-    r"|\b(?:\d{4}[- ]){3}\d{4}\b"              # Numéro de carte bancaire
+    r"\b[A-Z]{2}\d{2}[A-Z0-9]{4}\d{7,19}\b"      # IBAN
+    r"|\b(?:\d{4}[- ]){3}\d{4}\b"                  # Numéro de carte bancaire
     r"|password\s*="
+    r"|mot\s*de\s*passe\s*="                        # mot de passe en français
     r"|api[_-]?key\s*="
-    r"|Bearer\s+[A-Za-z0-9\-._~+/]+=*",
+    r"|cl[eé][_-]?api\s*="                         # clé API en français
+    r"|Bearer\s+[A-Za-z0-9\-._~+/]+=*"
+    r"|secret\s*=\s*['\"]?\w{8,}"                  # secret=<valeur>
+    r"|\btoken\s*=\s*['\"]?[A-Za-z0-9\-._~+/]{16,}", # token=<valeur longue>
     re.IGNORECASE,
+)
+
+# Patterns d'injection SQL — protège les champs texte libres contre les attaques DB
+_SQL_INJECTION_RE = re.compile(
+    r"\b(UNION\s+(?:ALL\s+)?SELECT|SELECT\s+.+\s+FROM|INSERT\s+INTO|UPDATE\s+\w+\s+SET"
+    r"|DELETE\s+FROM|DROP\s+(?:TABLE|DATABASE|INDEX)|ALTER\s+TABLE|CREATE\s+TABLE"
+    r"|TRUNCATE\s+TABLE|EXEC(?:UTE)?\s*\(|xp_cmdshell|sp_executesql"
+    r"|CAST\s*\(|CONVERT\s*\(.*\bCHAR\b"
+    r"|LOAD_FILE\s*\(|INTO\s+OUTFILE|INFORMATION_SCHEMA)\b"
+    # Commentaires SQL inline souvent utilisés pour tronquer les requêtes
+    r"|--\s*$"
+    r"|;\s*(?:DROP|DELETE|INSERT|UPDATE|SELECT|EXEC)",
+    re.IGNORECASE | re.MULTILINE,
 )
 
 _INC_RE = re.compile(r"^INC\d{7}$")
@@ -76,6 +111,7 @@ class IncidentInput(BaseModel):
         if len(v) < 5 or len(v) > 200:
             raise ValueError("title : entre 5 et 200 caractères requis")
         _check_injection(v, "title")
+        _check_sql_injection(v, "title")
         return v.strip()
 
     @field_validator("description")
@@ -84,6 +120,7 @@ class IncidentInput(BaseModel):
         if len(v) < 10 or len(v) > 5000:
             raise ValueError("description : entre 10 et 5000 caractères requis")
         _check_injection(v, "description")
+        _check_sql_injection(v, "description")
         _check_sensitive_data(v)
         return v.strip()
 
@@ -127,6 +164,12 @@ def _check_injection(text: str, field: str) -> None:
     if _PROMPT_INJECTION_RE.search(text):
         logger.critical("input_validator.prompt_injection field=%s", field)
         raise ValueError(f"Contenu suspect détecté dans '{field}'")
+
+
+def _check_sql_injection(text: str, field: str) -> None:
+    if _SQL_INJECTION_RE.search(text):
+        logger.critical("input_validator.sql_injection field=%s", field)
+        raise ValueError(f"Contenu SQL suspect détecté dans '{field}'")
 
 
 def _check_sensitive_data(text: str) -> None:
