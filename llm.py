@@ -5,7 +5,7 @@ from typing import Optional
 from openai import OpenAI, OpenAIError
 
 from config import Config
-from rag.prompts import SYSTEM_PROMPT, CLASSIFY_PROMPT
+from prompts import SYSTEM_PROMPT, CLASSIFY_PROMPT
 
 logger = logging.getLogger(__name__)
 

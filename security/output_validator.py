@@ -18,13 +18,18 @@ VALID_SUBCATEGORIES = {
 
 _INC_RE = re.compile(r"^INC\d{7}$")
 
-# Patterns d'hallucinations LLM : artefacts de template et refus inattendus
+# Patterns d'hallucinations LLM : artefacts de template, refus inattendus, échos d'injection
 _HALLUCINATION_RE = re.compile(
     r"example\.com"
     r"|I am an AI|As an AI language model|I cannot fulfill|I cannot provide"
     r"|<tool_call>|TOOL_NAME|\[INST\]|<\|system\|>|<\|im_start\|>|<\|im_end\|>"
     r"|\n\nHuman\s*:|\n\nAssistant\s*:"
-    r"|je suis un assistant IA|en tant qu'IA",
+    r"|je suis un assistant IA|en tant qu'IA"
+    # Détection des échos d'injection de prompt dans la sortie LLM
+    r"|\bSYSTEM\s*:\s+\w"                          # SYSTEM: <directive> recopiée
+    r"|\binclude\s+the\s+(literal\s+)?word\b"      # echo d'instruction injectée
+    r"|\brepeat\s+the\s+(following|word)\b"
+    r"|\bact\s+as\s+(if|though|a)\b",
     re.IGNORECASE,
 )
 

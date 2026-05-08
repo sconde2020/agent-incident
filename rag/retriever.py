@@ -4,6 +4,41 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 
+def _query_collection(collection, query: str, k: int, where) -> dict | None:
+    try:
+        return collection.query(
+            query_texts=[query],
+            n_results=k,
+            where=where,
+            include=["documents", "metadatas", "distances"],
+        )
+    except Exception as exc:
+        logger.error("rag.retriever.query_failed error=%s", exc)
+        return None
+
+
+def _deduplicate_chunks(results: dict) -> list[dict]:
+    # Chroma peut retourner plusieurs chunks du même fichier (sections ##/###).
+    # On ne garde que le chunk le plus pertinent par source_file.
+    seen: dict[str, dict] = {}
+    for text, meta, dist in zip(
+        results["documents"][0],
+        results["metadatas"][0],
+        results["distances"][0],
+    ):
+        source = meta.get("source_file", "")
+        score = round(1.0 - dist, 3)
+        if source not in seen or score > seen[source]["relevance_score"]:
+            seen[source] = {
+                "text": text,
+                "source_file": source,
+                "doc_type": meta.get("doc_type", ""),
+                "section": meta.get("section_title", ""),
+                "relevance_score": score,
+            }
+    return list(seen.values())
+
+
 class RAGRetriever:
     def __init__(
         self,
@@ -52,40 +87,11 @@ class RAGRetriever:
         if collection is None:
             logger.warning("rag.retriever.no_collection – RAG désactivé")
             return []
-
         k = k or self.top_k
         where = {"doc_type": doc_type_filter} if doc_type_filter else None
-
-        try:
-            results = collection.query(
-                query_texts=[query],
-                n_results=k,
-                where=where,
-                include=["documents", "metadatas", "distances"],
-            )
-        except Exception as exc:
-            logger.error("rag.retriever.query_failed error=%s", exc)
+        results = _query_collection(collection, query, k, where)
+        if results is None:
             return []
-
-        # Chroma peut retourner plusieurs chunks du même fichier (sections ##/###).
-        # On ne garde que le chunk le plus pertinent par source_file.
-        seen: dict[str, dict] = {}
-        for text, meta, dist in zip(
-            results["documents"][0],
-            results["metadatas"][0],
-            results["distances"][0],
-        ):
-            source = meta.get("source_file", "")
-            score = round(1.0 - dist, 3)
-            if source not in seen or score > seen[source]["relevance_score"]:
-                seen[source] = {
-                    "text": text,
-                    "source_file": source,
-                    "doc_type": meta.get("doc_type", ""),
-                    "section": meta.get("section_title", ""),
-                    "relevance_score": score,
-                }
-
-        docs = list(seen.values())
-        logger.debug("rag.retriever.results returned=%d unique_files=%d", len(docs), len(seen))
+        docs = _deduplicate_chunks(results)
+        logger.debug("rag.retriever.results returned=%d unique_files=%d", len(docs), len(docs))
         return docs

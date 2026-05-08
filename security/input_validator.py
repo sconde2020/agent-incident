@@ -33,6 +33,7 @@ _PROMPT_INJECTION_RE = re.compile(
     r"|disregard\s+(all|any|previous)\s+instructions?"
     r"|new\s+instructions?\s*:"
     r"|system\s*prompt\s*:"
+    r"|\bSYSTEM\s*:\s+\w"                               # injection via préfixe SYSTEM: <directive>
     # ── Français ─────────────────────────────────────────────────────────────
     r"|ignore\s+(les\s+)?(instructions?|consignes?)\s+(précédentes?|ci-dessus|antérieures?)"
     r"|oublie\s+(tout|les\s+instructions?|tes\s+instructions?)"

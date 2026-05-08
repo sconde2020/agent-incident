@@ -203,31 +203,50 @@ pip install pytest
 
 Les tests unitaires n'ont pas besoin de clé API. Les tests d'intégration et de qualité appellent le LLM réel et requièrent `OPENAI_API_KEY` dans `.env`.
 
+Les rapports sont générés automatiquement dans `tests/reports/` à la fin de chaque session pytest :
+
+- `rapport_unitaires.md` — tests unitaires
+- `rapport_integration.md` — tests d'intégration
+- `rapport_qualite.md` — tests de qualité LLM-as-Judge
+
 ### Tests unitaires (sans LLM, sans réseau)
 
-60 tests couvrant tous les outils et la mémoire conversationnelle, entièrement mockés.
+Répartis dans `tests/unit/` : outils, mémoire, validateurs d'entrée et de sortie.
 
 ```bash
-python -m pytest tests/test_unitaires.py -v
+# Tous les tests unitaires
+python -m pytest tests/unit/ -v
+
+# Par fichier
+python -m pytest tests/unit/test_tools.py -v
+python -m pytest tests/unit/test_memory.py -v
+python -m pytest tests/unit/test_input_validator.py -v
+python -m pytest tests/unit/test_output_validator.py -v
 ```
 
 ### Tests d'intégration (LLM réel + SQLite)
 
-22 tests vérifiant les mécaniques du pipeline (CMDB, monitoring, doublons, routing) et la mémoire de session. Les tests sans LLM passent même sans clé API.
+Répartis dans `tests/integration/` : pipeline, mémoire de session, sécurité. Les tests de doublon passent sans clé API.
 
 ```bash
-python -m pytest tests/test_integration.py -v -m integration
+# Tous les tests d'intégration
+python -m pytest tests/integration/ -v -m integration
+
+# Par fichier
+python -m pytest tests/integration/test_pipeline.py -v -m integration
+python -m pytest tests/integration/test_memory_mechanics.py -v -m integration
+python -m pytest tests/integration/test_security.py -v -m integration
 ```
 
 ### Tests de qualité — LLM-as-Judge (LLM réel + RAG réel)
 
-11 questions évaluées par un juge LLM (gpt-4o) sur 3 critères : Pertinence, Fidélité, Cohérence. Génère `tests/rapport_qualite.md` à la fin.
+11 questions évaluées par un juge LLM (gpt-4o) sur 3 critères : Pertinence, Fidélité, Cohérence. Génère `tests/reports/rapport_qualite.md` à la fin.
 
 ```bash
 # Initialiser la DB et le RAG si ce n'est pas encore fait
 python main.py init
 
-python -m pytest tests/test_qualite.py -v -s
+python -m pytest tests/quality/test_quality.py -v -s
 ```
 
 Score cible : ≥ 3.5 / 5.0 globalement, ≥ 3.0 par question.
@@ -264,10 +283,11 @@ agent-incident/
 │   ├── input_validator.py   # Anti-injection, données sensibles, formats SWIFT
 │   └── output_validator.py  # Validation sorties LLM, anti-hallucination
 │
+├── prompts.py               # Templates système et classification (SYSTEM_PROMPT, CLASSIFY_PROMPT)
+│
 ├── rag/                     # Retrieval Augmented Generation
 │   ├── ingest.py            # Indexation Markdown → ChromaDB
-│   ├── retriever.py         # Recherche sémantique
-│   └── prompts.py           # Templates système et classification
+│   └── retriever.py         # Recherche sémantique
 │
 ├── tools/                   # Outils de l'agent (function calling)
 │   ├── search_cmdb.py
@@ -284,14 +304,26 @@ agent-incident/
 │   └── store.py
 │
 ├── tests/                   # Suite de tests
-│   ├── conftest.py          # Fixtures partagées
-│   ├── test_unitaires.py    # 60 tests unitaires (mockés, sans LLM)
-│   ├── test_integration.py  # 22 tests d'intégration (SQLite réel)
-│   ├── test_qualite.py      # LLM-as-Judge (LLM + RAG réels)
+│   ├── conftest.py          # Enregistrement des markers pytest
 │   ├── questions.json       # Questions pour les tests de qualité
-│   ├── rapport_unitaires.md
-│   ├── rapport_integration.md
-│   └── rapport_qualite.md
+│   ├── unit/                # Tests unitaires (sans LLM, sans réseau)
+│   │   ├── test_tools.py        # 9 classes — outils function calling
+│   │   ├── test_memory.py       # ConversationMemory
+│   │   ├── test_input_validator.py   # Injection, SQL, données sensibles
+│   │   └── test_output_validator.py  # Enums, filtrage, sanitisation, cohérence
+│   ├── integration/         # Tests d'intégration (SQLite réel)
+│   │   ├── conftest.py          # Fixtures, helpers DB, pytestmark
+│   │   ├── test_pipeline.py     # Mécaniques pipeline (CMDB, monitoring, doublons)
+│   │   ├── test_memory_mechanics.py  # Mémoire de session
+│   │   └── test_security.py     # Barrière sécurité avant LLM
+│   ├── quality/             # Tests qualité LLM-as-Judge
+│   │   ├── judge.py             # Client juge gpt-4o, prompts, formatage
+│   │   ├── conftest.py          # Fixtures (real_agent, score_collector), génération rapport
+│   │   └── test_quality.py      # 11 questions évaluées par le juge
+│   └── reports/             # Rapports générés automatiquement
+│       ├── rapport_qualite.md
+│       ├── rapport_unitaires.md
+│       └── rapport_integration.md
 │
 ├── docker/                  # Fichiers Docker
 │   ├── Dockerfile

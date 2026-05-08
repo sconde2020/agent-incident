@@ -63,10 +63,11 @@ agent-incident/
 │   ├── input_validator.py
 │   └── output_validator.py
 │
+├── prompts.py
+│
 ├── rag/
 │   ├── ingest.py
-│   ├── retriever.py
-│   └── prompts.py
+│   └── retriever.py
 │
 ├── tools/
 │   ├── search_cmdb.py
@@ -84,10 +85,22 @@ agent-incident/
 │
 ├── tests/
 │   ├── conftest.py
-│   ├── test_unitaires.py
-│   ├── test_integration.py
-│   ├── test_qualite.py
-│   └── questions.json
+│   ├── questions.json
+│   ├── unit/
+│   │   ├── test_tools.py
+│   │   ├── test_memory.py
+│   │   ├── test_input_validator.py
+│   │   └── test_output_validator.py
+│   ├── integration/
+│   │   ├── conftest.py
+│   │   ├── test_pipeline.py
+│   │   ├── test_memory_mechanics.py
+│   │   └── test_security.py
+│   ├── quality/
+│   │   ├── judge.py
+│   │   ├── conftest.py
+│   │   └── test_quality.py
+│   └── reports/
 │
 ├── docker/
 │   ├── Dockerfile

@@ -17,7 +17,13 @@
       "Bash(docker build *)",
       "PowerShell(docker rm -f mon-agent 2>$null; $key = \\(Get-Content \"c:\\\\Users\\\\admin\\\\openai\\\\incident-agent\\\\.env\" -ErrorAction SilentlyContinue | Select-String \"OPENAI_API_KEY=\"\\).ToString\\(\\).Split\\(\"=\",2\\)[1]; docker run -d -p 8000:8000 -e \"OPENAI_API_KEY=$key\" -e \"API_KEY=testkey\" --name mon-agent agent-incident:v1; Start-Sleep -Seconds 5; docker ps --filter \"name=mon-agent\" --format \"table {{.Names}}\\\\t{{.Status}}\")",
       "PowerShell($health = Invoke-WebRequest -Uri \"http://localhost:8000/health\" -UseBasicParsing; Write-Host \"STATUS: $\\($health.StatusCode\\)\"; $health.Content)",
-      "PowerShell($body = '{\"id\": \"INC0001042\"}'; $qualify = Invoke-WebRequest -Uri \"http://localhost:8000/qualify\" -Method POST -Headers @{\"Authorization\"=\"Bearer testkey\"; \"Content-Type\"=\"application/json\"} -Body $body -UseBasicParsing; Write-Host \"STATUS: $\\($qualify.StatusCode\\)\"; $qualify.Content | ConvertFrom-Json | ConvertTo-Json -Depth 5)"
+      "PowerShell($body = '{\"id\": \"INC0001042\"}'; $qualify = Invoke-WebRequest -Uri \"http://localhost:8000/qualify\" -Method POST -Headers @{\"Authorization\"=\"Bearer testkey\"; \"Content-Type\"=\"application/json\"} -Body $body -UseBasicParsing; Write-Host \"STATUS: $\\($qualify.StatusCode\\)\"; $qualify.Content | ConvertFrom-Json | ConvertTo-Json -Depth 5)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\admin\\\\openai\\\\agent-incident\\\\tests\" -Force)",
+      "PowerShell(Move-Item \"c:\\\\Users\\\\admin\\\\openai\\\\agent-incident\\\\tests\\\\rapport_qualite.md\" \"c:\\\\Users\\\\admin\\\\openai\\\\agent-incident\\\\tests\\\\reports\\\\rapport_qualite.md\" -Force)",
+      "PowerShell(Move-Item \"c:\\\\Users\\\\admin\\\\openai\\\\agent-incident\\\\tests\\\\rapport_unitaires.md\" \"c:\\\\Users\\\\admin\\\\openai\\\\agent-incident\\\\tests\\\\reports\\\\rapport_unitaires.md\" -Force)",
+      "PowerShell(Move-Item \"c:\\\\Users\\\\admin\\\\openai\\\\agent-incident\\\\tests\\\\rapport_integration.md\" \"c:\\\\Users\\\\admin\\\\openai\\\\agent-incident\\\\tests\\\\reports\\\\rapport_integration.md\" -Force)",
+      "Bash(python -c \"import json; q=[x for x in json.load\\(open\\('tests/questions.json', encoding='utf-8'\\)\\) if x['id']=='Q06'][0]; print\\(json.dumps\\(q, indent=2, ensure_ascii=False\\)\\)\")",
+      "Bash(dir docs *)"
     ]
   }
 }

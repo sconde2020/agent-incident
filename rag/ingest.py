@@ -52,6 +52,29 @@ def _batch_insert(collection, all_docs: list, all_ids: list, all_metadatas: list
         )
 
 
+def _collect_md_files(docs_dir: str) -> list[Path]:
+    """Retourner les .md de docs_dir ; liste vide si répertoire absent ou sans fichier."""
+    docs_path = Path(docs_dir)
+    if not docs_path.exists():
+        logger.warning("rag.ingest.docs_dir_not_found path=%s", docs_dir)
+        return []
+    md_files = list(docs_path.glob("*.md"))
+    if not md_files:
+        logger.warning("rag.ingest.no_md_files path=%s", docs_dir)
+        return []
+    return md_files
+
+
+def _process_all_files(md_files: list[Path], splitter) -> tuple[list, list, list]:
+    all_docs, all_ids, all_metadatas = [], [], []
+    for md_file in md_files:
+        docs, ids, metas = _process_md_file(md_file, splitter, len(all_docs))
+        all_docs.extend(docs)
+        all_ids.extend(ids)
+        all_metadatas.extend(metas)
+    return all_docs, all_ids, all_metadatas
+
+
 def ingest_docs(
     docs_dir: str = "docs/",
     chroma_path: str = "chroma_db/",
@@ -64,32 +87,21 @@ def ingest_docs(
     Retourne le nombre de chunks indexés.
     La collection est recréée à chaque appel pour refléter les mises à jour des docs.
     """
+    md_files = _collect_md_files(docs_dir)
+    if not md_files:
+        return 0
+
     # Imports tardifs : chromadb et sentence-transformers sont lourds,
     # on ne les charge que quand l'ingestion est réellement demandée.
     from langchain_text_splitters import MarkdownHeaderTextSplitter
     from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
-
-    docs_path = Path(docs_dir)
-    if not docs_path.exists():
-        logger.warning("rag.ingest.docs_dir_not_found path=%s", docs_dir)
-        return 0
-    md_files = list(docs_path.glob("*.md"))
-    if not md_files:
-        logger.warning("rag.ingest.no_md_files path=%s", docs_dir)
-        return 0
 
     logger.info("rag.ingest.start files=%d chroma=%s", len(md_files), chroma_path)
     embedding_fn = SentenceTransformerEmbeddingFunction(model_name=embedding_model)
     collection = _init_collection(chroma_path, embedding_fn, collection_name)
     splitter = MarkdownHeaderTextSplitter(headers_to_split_on=[("##", "section"), ("###", "subsection")])
 
-    all_docs, all_ids, all_metadatas = [], [], []
-    for md_file in md_files:
-        docs, ids, metas = _process_md_file(md_file, splitter, len(all_docs))
-        all_docs.extend(docs)
-        all_ids.extend(ids)
-        all_metadatas.extend(metas)
-
+    all_docs, all_ids, all_metadatas = _process_all_files(md_files, splitter)
     if all_docs:
         _batch_insert(collection, all_docs, all_ids, all_metadatas, batch_size)
     logger.info("rag.ingest.done chunks=%d files=%d", len(all_docs), len(md_files))
