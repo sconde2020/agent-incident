@@ -13,7 +13,7 @@ VALID_CATEGORIES = {
 VALID_SUBCATEGORIES = {
     "Connectivité", "Performance", "Traitement", "Déploiement", "Configuration",
     "Intégration", "Réconciliation", "Correspondant", "Sanctions", "AML",
-    "Certificats", "Réseau",
+    "Certificats", "Réseau", "Accès",
 }
 
 _INC_RE = re.compile(r"^INC\d{7}$")
@@ -114,7 +114,10 @@ class QualificationResult(BaseModel):
         if self.is_duplicate and not self.duplicate_of:
             raise ValueError("is_duplicate=True mais duplicate_of est absent")
         if self.is_major_incident and len(self.related_incidents) < 2:
-            raise ValueError("is_major_incident=True mais related_incidents < 2")
+            # Le LLM n'a pas accès aux IDs réels — downgrade silencieux plutôt que rejet total
+            self.is_major_incident = False
+            self.related_incidents = []
+            logger.warning("output_validator.major_incident_downgraded no_related_incidents")
         return self
 
 

@@ -67,19 +67,25 @@ class RAGRetriever:
             logger.error("rag.retriever.query_failed error=%s", exc)
             return []
 
-        docs = []
+        # Chroma peut retourner plusieurs chunks du même fichier (sections ##/###).
+        # On ne garde que le chunk le plus pertinent par source_file.
+        seen: dict[str, dict] = {}
         for text, meta, dist in zip(
             results["documents"][0],
             results["metadatas"][0],
             results["distances"][0],
         ):
-            docs.append({
-                "text": text,
-                "source_file": meta.get("source_file", ""),
-                "doc_type": meta.get("doc_type", ""),
-                "section": meta.get("section_title", ""),
-                "relevance_score": round(1.0 - dist, 3),
-            })
+            source = meta.get("source_file", "")
+            score = round(1.0 - dist, 3)
+            if source not in seen or score > seen[source]["relevance_score"]:
+                seen[source] = {
+                    "text": text,
+                    "source_file": source,
+                    "doc_type": meta.get("doc_type", ""),
+                    "section": meta.get("section_title", ""),
+                    "relevance_score": score,
+                }
 
-        logger.debug("rag.retriever.results returned=%d", len(docs))
+        docs = list(seen.values())
+        logger.debug("rag.retriever.results returned=%d unique_files=%d", len(docs), len(seen))
         return docs

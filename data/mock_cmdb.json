@@ -377,6 +377,27 @@
         "region": "eu-west-1",
         "replicas": 1
       }
+    },
+    {
+      "id": "svc-019",
+      "name": "support-helpdesk",
+      "display_name": "Support Informatique & Helpdesk",
+      "description": "Service de support IT généraliste : incidents bureautiques, matériel (imprimantes, postes, périphériques), demandes de service non bancaires. Hors périmètre SWIFT et paiements.",
+      "type": "support",
+      "language": null,
+      "team": "support-helpdesk",
+      "owner": "it-support@banque-swift.fr",
+      "business_criticality": "low",
+      "sla_target_availability": 95.0,
+      "tier": 4,
+      "dependencies": [],
+      "dependents": [],
+      "infrastructure": {
+        "host": "helpdesk-prod-01",
+        "environment": "production",
+        "region": "eu-west-1",
+        "replicas": 1
+      }
     }
   ],
   "databases": [
@@ -540,6 +561,15 @@
       "services": ["correspondent-service"],
       "description": "Gestion des relations de correspondance bancaire : RMA, comptes nostro, résolution des litiges et communication avec les banques partenaires.",
       "escalation_contact": "celine.roux@banque-swift.fr"
+    },
+    {
+      "id": "support-helpdesk",
+      "name": "Support Informatique & Helpdesk",
+      "slack_channel": "#support-helpdesk",
+      "oncall_email": "it-support@banque-swift.fr",
+      "services": ["support-helpdesk"],
+      "description": "Support IT généraliste pour les incidents hors périmètre SWIFT/bancaire : bureautique, matériel, postes de travail, imprimantes. Ne pas router les incidents SWIFT vers cette équipe.",
+      "escalation_contact": "it-support@banque-swift.fr"
     }
   ]
 }

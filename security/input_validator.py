@@ -14,7 +14,7 @@ VALID_CATEGORIES = {
 VALID_SUBCATEGORIES = {
     "Connectivité", "Performance", "Traitement", "Déploiement", "Configuration",
     "Intégration", "Réconciliation", "Correspondant", "Sanctions", "AML",
-    "Certificats", "Réseau",
+    "Certificats", "Réseau", "Accès",
 }
 
 # Patterns d'injection de prompt issus des vecteurs d'attaque connus

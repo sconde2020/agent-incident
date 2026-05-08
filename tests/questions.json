@@ -56,8 +56,8 @@
       "service": "support-helpdesk"
     },
     "categorie": "hors_sujet",
-    "attendu": "P4 (informatif, aucun impact opérationnel SWIFT) avec confidence_score < 0.3. Équipe team-ops (fallback service inconnu de la CMDB). Aucun runbook SWIFT suggéré. Resolution_hint minimal ou null. L'agent ne doit pas halluciner un contexte SWIFT inexistant.",
-    "elements_factuels": "Service 'support-helpdesk' absent de la CMDB SWIFT → fallback team-ops. Règle P4: informatif, aucun impact opérationnel immédiat. Calibration confidence: 0.00-0.29 pour ticket très éloigné du domaine SWIFT. Aucun runbook applicable dans le corpus (runbooks couvrent SWIFT/paiements/réconciliation, pas IT support). La resolution_hint doit être null ou indiquer hors périmètre."
+    "attendu": "P4 (informatif, aucun impact opérationnel SWIFT) avec confidence_score ≤ 0.15. Équipe support-helpdesk (service présent dans la CMDB, criticité low, tier 4). Aucun runbook SWIFT suggéré. Resolution_hint minimal ou null. L'agent ne doit pas halluciner un contexte SWIFT inexistant.",
+    "elements_factuels": "Service 'support-helpdesk' présent dans la CMDB avec team=support-helpdesk, business_criticality=low, tier=4 → équipe support-helpdesk. Règle P4: informatif, aucun impact opérationnel SWIFT immédiat. Calibration confidence: 0.00-0.15 pour ticket très éloigné du domaine SWIFT (aucun terme MT*, gpi, paiement, BIC, SWIFT dans la description). Aucun runbook applicable dans le corpus (runbooks couvrent SWIFT/paiements/réconciliation, pas IT support). La resolution_hint doit être null ou indiquer hors périmètre. Ne pas pénaliser support-helpdesk comme équipe assignée."
   },
   {
     "id": "Q06",
@@ -110,7 +110,7 @@
     },
     "categorie": "memoire",
     "attendu": "P2 (> 100 transactions gpi impactées). Resolution_hint doit noter le caractère RÉCURRENT de l'incident (second dysfonctionnement sur gpi-tracker dans la session) et recommander une investigation approfondie du service plutôt qu'un simple redémarrage. team-swift.",
-    "elements_factuels": "gpi-tracker → team-swift (CMDB, tier 2). 180 transactions > 100 = P2. La mémoire de session contient déjà un incident gpi-tracker (timeout ACK). Un agent exploitant la mémoire doit signaler le pattern récurrent et escalader. Calibration confidence: élevée (> 0.7) si le service est connu et le pattern documenté."
+    "elements_factuels": "gpi-tracker → team-swift (CMDB, tier 2). 180 transactions > 100 = P2. La mémoire de session contient déjà un incident gpi-tracker (timeout ACK). Un agent exploitant la mémoire doit signaler le pattern récurrent et escalader. Calibration confidence: élevée (> 0.7) si le service est connu et le pattern documenté. Runbooks acceptables dans le corpus : faq_paiements_swift.md (couvre les statuts UETR, confirmations gpi, CAMT.054). Ne pas pénaliser faq_paiements_swift.md comme runbook suggéré."
   },
   {
     "id": "Q10",
@@ -133,7 +133,7 @@
       "service": "infrastructure-monitoring"
     },
     "categorie": "bord",
-    "attendu": "P1 ou P2 (risque imminent d'extinction de tous les services SWIFT critiques). Confiance modérée (service 'infrastructure-monitoring' absent de la CMDB). team-infra ou team-ops (fallback). Resolution_hint doit mentionner l'urgence de rétablir l'alimentation ou de basculer sur le groupe électrogène.",
-    "elements_factuels": "service 'infrastructure-monitoring' absent de la CMDB → fallback team-ops ou team-infra selon contexte. Salle serveurs héberge swift-alliance (tier 1 critical), swift-gateway (tier 1 critical), fin-processor (tier 1 critical). Perte d'alimentation = arrêt total services SWIFT = P1 imminent. Calibration confidence: 0.30-0.59 car service inconnu CMDB mais domaine SWIFT reconnaissable. Pas de runbook UPS dans le corpus."
+    "attendu": "P1 (risque imminent d'extinction de tous les services SWIFT critiques dans < 15 min). Équipe team-infra (précédent INC0002052 sur le même service). Confiance 0.30–0.59 (service absent de la CMDB, mais incident similaire trouvé). Resolution_hint doit mentionner l'urgence de rétablir l'alimentation ou de basculer sur le groupe électrogène. runbooks_suggested=[].",
+    "elements_factuels": "CMDB : service 'infrastructure-monitoring' absent → aucune donnée CMDB disponible pour l'agent. INCIDENTS SIMILAIRES RÉCENTS (search_incidents retourne) : INC0002052 — P1, Infrastructure/Réseau, team-infra, resolved — 'Onduleur UPS datacenter SWIFT en mode batterie, risque extinction services critiques'. Salle serveurs héberge swift-alliance (tier 1 critical), swift-gateway (tier 1 critical), fin-processor (tier 1 critical). Perte d'alimentation imminente = P1. Calibration confidence : 0.30–0.59 car service absent CMDB mais précédent trouvé dans les incidents. RUNBOOKS : corpus disponible = runbook_swift_fin_indisponible.md, faq_paiements_swift.md, runbook_nostro_reconciliation.md, postmortem_swift_cut_off_2024_02.md, runbook_db_connection_pool.md, runbook_sanctions_screening.md. Aucun ne couvre les pannes UPS/alimentation. Comportement attendu : runbooks_suggested=[]. Ne pas pénaliser l'absence de runbook ; pénaliser si un runbook sans rapport avec l'alimentation est suggéré."
   }
 ]

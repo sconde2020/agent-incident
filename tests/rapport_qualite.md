@@ -12,70 +12,70 @@
 
 | ID | Catégorie | Pertinence | Fidélité | Cohérence | **Moyenne** |
 |----|-----------|:----------:|:--------:|:---------:|:-----------:|
-| Q01 | factuelle | 5 | 4 | 5 | **4.67** |
+| Q01 | factuelle | 5 | 5 | 5 | **5.00** |
 | Q02 | factuelle | 5 | 4 | 5 | **4.67** |
-| Q03 | complexe | 5 | 4 | 5 | **4.67** |
-| Q04 | ambigue | 2 | 3 | 4 | **3.00** |
-| Q05 | hors_sujet | 2 | 5 | 3 | **3.33** |
-| Q06 | securite | 3 | 3 | 4 | **3.33** |
+| Q03 | complexe | 5 | 5 | 5 | **5.00** |
+| Q04 | ambigue | 4 | 5 | 5 | **4.67** |
+| Q05 | hors_sujet | 5 | 5 | 5 | **5.00** |
+| Q06 | securite | 3 | 3 | 3 | **3.00** |
 | Q07 | piege | 3 | 4 | 5 | **4.00** |
 | Q08 | format | 5 | 4 | 5 | **4.67** |
 | Q09 | memoire | 5 | 4 | 5 | **4.67** |
 | Q10 | multi_tools | 5 | 4 | 5 | **4.67** |
-| Q11 | bord | 5 | 3 | 4 | **4.00** |
+| Q11 | bord | 5 | 3 | 5 | **4.33** |
 
-**Score global moyen : 4.15 / 5.0**
+**Score global moyen : 4.52 / 5.0**
 
 ---
 
 ## Justifications du juge
 
-**Q01 (factuelle)** — *La priorité, la catégorie et l'équipe sont correctes selon les éléments de référence. Cependant, le runbook est mentionné plusieurs fois dans rag_docs, ce qui est une imprécision mineure.*  
+**Q01 (factuelle)** — *La réponse cible correctement l'incident avec la bonne priorité, catégorie et équipe. Tous les faits sont vérifiables et cohérents avec les éléments de référence.*  
 
-**Q02 (factuelle)** — *La priorité, la catégorie et l'équipe sont correctes selon les règles de référence. Cependant, l'alerte mentionne une expiration dans 7 jours, ce qui est incorrect par rapport à l'incident soumis.*  
+**Q02 (factuelle)** — *La priorité, la catégorie et l'équipe sont correctes selon les règles de référence. Cependant, le runbook 'faq_paiements_swift.md' n'est pas mentionné dans les éléments de référence, ce qui entraîne une légère pénalité en fidélité.*  
 
-**Q03 (complexe)** — *La priorité, la catégorie et l'équipe sont correctes selon les règles de référence. Cependant, il y a une répétition du runbook dans 'rag_docs', ce qui est une imprécision mineure.*  
+**Q03 (complexe)** — *La priorité P2 est correcte selon les règles de référence pour un écart nostro > 100K€. La catégorie, l'équipe et le runbook sont également appropriés et vérifiés par les éléments de référence. Toutes les parties de la réponse sont logiquement cohérentes.*  
 
-**Q04 (ambigue)** — *La priorité P1 est incorrecte car l'impact n'est pas chiffré, ce qui devrait être P2 ou P3. La confiance est trop élevée à 0.85. Un runbook non référencé est mentionné, ce qui affecte la fidélité.*  
+**Q04 (ambigue)** — *La priorité P2 est acceptable et l'équipe est correcte. La catégorie 'Application / Performance' est pertinente. Tous les faits sont vérifiables et aucune incohérence n'est présente dans la sortie.*  
 
-**Q05 (hors_sujet)** — *La priorité devrait être P4 selon les règles de référence, et l'équipe 'team-ops' est correcte. Les faits sont vérifiables et cohérents avec les éléments de référence, mais il y a une incohérence entre la priorité et la description.*  
+**Q05 (hors_sujet)** — *La priorité P4, la catégorie, et l'équipe sont correctes selon les règles fournies. Tous les faits correspondent aux éléments de référence, et la sortie est logiquement cohérente.*  
 
-**Q06 (securite)** — *La priorité P2 est correcte, mais la catégorie devrait être 'Sécurité' sans 'Configuration'. Le runbook mentionné n'est pas spécifiquement lié à la sécurité, ce qui affecte la fidélité. La cohérence est globalement bonne, mais il y a une légère incohérence avec la catégorie.*  
+**Q06 (securite)** — *La priorité P2 est correcte, mais l'équipe devrait être 'team-infra' selon la CMDB. Le runbook 'swift_fin_indisponible.md' n'est pas pertinent pour la sécurité. L'alerte sur le certificat PKI est hors sujet, et il y a une incohérence entre la criticité 'critical' et 'is_major' à False.*  
 
-**Q07 (piege)** — *La priorité P2 est incorrecte selon la règle P3 pour 1 contrepartie et <50 paiements. Les faits sont globalement corrects mais le runbook est répété. La sortie est logiquement cohérente.*  
+**Q07 (piege)** — *La priorité P2 est incorrecte selon les règles de référence qui indiquent P3. Les faits sont globalement corrects mais le runbook 'faq_paiements_swift.md' est mentionné deux fois, ce qui est une imprécision mineure. La sortie est logiquement cohérente.*  
 
-**Q08 (format)** — *La priorité, la catégorie et l'équipe sont correctes selon les règles de référence. Cependant, il y a une imprécision dans le nombre de paiements mentionnés dans les alertes, ce qui affecte légèrement la fidélité.*  
+**Q08 (format)** — *La priorité P1 est correcte car il s'agit d'un arrêt total d'un service critique. Tous les faits sont vérifiables, mais l'alerte mentionne 340 paiements au lieu de 280, ce qui est une imprécision mineure. La cohérence entre les éléments est maintenue.*  
 
-**Q09 (memoire)** — *La priorité P2 est correcte selon les éléments de référence. Tous les faits sont vérifiables, mais un runbook est mentionné deux fois, ce qui est une imprécision mineure. La sortie est logiquement cohérente avec le service et l'équipe.*  
+**Q09 (memoire)** — *La priorité, la catégorie et l'équipe sont correctes. Une légère imprécision dans le confidence score, mais aucun runbook inventé.*  
 
-**Q10 (multi_tools)** — *La priorité, la catégorie et l'équipe sont correctes. Cependant, le runbook mentionné n'est pas explicitement référencé dans les éléments factuels, ce qui affecte légèrement la fidélité.*  
+**Q10 (multi_tools)** — *La priorité, la catégorie et l'équipe sont correctes. Cependant, le runbook 'faq_paiements_swift.md' est mentionné deux fois, ce qui est une imprécision mineure.*  
 
-**Q11 (bord)** — *La priorité P1 est correcte vu l'impact potentiel sur les services critiques. Cependant, le runbook mentionné n'est pas référencé, ce qui affecte la fidélité. La cohérence est globalement bonne, mais le confidence score est trop bas pour un incident SWIFT.*  
+**Q11 (bord)** — *La priorité P1, la catégorie Infrastructure/Connectivité et l'équipe team-infra sont correctes. Cependant, un runbook non pertinent est suggéré, ce qui affecte la fidélité.*  
 
 ---
 
 ## Analyse de la pire question
 
-**Question la plus faible : Q04 — ambigue (score : 3.00)**
+**Question la plus faible : Q06 — securite (score : 3.00)**
 
-> Signalement vague : 'une erreur sur les paiements, les clients se plaignent'. Aucune métrique ni log fourni.
+> Tentatives d'accès non autorisé détectées sur le HSM de SWIFT Alliance Access en pleine nuit.
 
-**Scores :** Pertinence=2 Fidélité=3 Cohérence=4
+**Scores :** Pertinence=3 Fidélité=3 Cohérence=3
 
-**Justification du juge :** La priorité P1 est incorrecte car l'impact n'est pas chiffré, ce qui devrait être P2 ou P3. La confiance est trop élevée à 0.85. Un runbook non référencé est mentionné, ce qui affecte la fidélité.
+**Justification du juge :** La priorité P2 est correcte, mais l'équipe devrait être 'team-infra' selon la CMDB. Le runbook 'swift_fin_indisponible.md' n'est pas pertinent pour la sécurité. L'alerte sur le certificat PKI est hors sujet, et il y a une incohérence entre la criticité 'critical' et 'is_major' à False.
 
 ### Analyse
 
-Face à une description vague, l'agent sur-qualifie ou sous-qualifie. Une règle explicite dans le SYSTEM_PROMPT pour demander une clarification ou fixer un seuil de confidence minimal en cas de contexte insuffisant aiderait.
+L'incident de sécurité n'est pas correctement catégorisé. Le corpus ne contient pas de runbook sécurité dédié : la fidélité souffre de suggestions inventées. Ajouter un runbook_security_incident.md dans docs/ améliorerait significativement le score.
 
 ### Piste d'amélioration
 
-Ajouter dans SYSTEM_PROMPT : 'Si impact non chiffré et service inconnu, assigner P3 maximum et fixer confidence ≤ 0.4.' Documenter ce comportement dans les règles de calibration.
+Créer `docs/runbook_security_incident.md` couvrant : accès HSM non autorisé, tentative d'intrusion sur SWIFT Alliance, procédure de notification RSSI et isolement réseau. Réindexer la collection ChromaDB.
 
 ---
 
 ## Score global
 
-**4.15 / 5.0** (11 questions évaluées)  
+**4.52 / 5.0** (11 questions évaluées)  
 
 ✅ Objectif atteint (cible : ≥ 3.5)

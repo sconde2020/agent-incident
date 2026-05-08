@@ -4,7 +4,7 @@ Exercice 3 — LLM-as-Judge : évaluation de la qualité des qualifications.
 Pipeline :
   1. Charge tests/questions.json (11 questions couvrant 10 catégories).
   2. Appelle l'agent RÉEL (gpt-4o-mini, DB SQLite + RAG ChromaDB réels, sans mock).
-  3. Appelle le JUGE (claude-haiku-4-5-20251001 via Anthropic, sinon gpt-4o via OpenAI)
+  3. Appelle le JUGE (gpt-4o via OpenAI)
      avec la réponse + les éléments factuels.
   4. Parse le JSON du juge et calcule un score moyen par question.
   5. Assert score_moyen_question >= 3.0.
@@ -12,13 +12,19 @@ Pipeline :
 
 Lancer : pytest tests/test_qualite.py -v -s
 """
+import io
 import json
 import logging
 import os
+import sys
 from pathlib import Path
 from typing import Optional
 
 import pytest
+
+# Force UTF-8 sur la sortie console (Windows cp1252 / cp850 par défaut)
+if isinstance(sys.stdout, io.TextIOWrapper):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 from agent import Agent
 from config import Config
@@ -105,46 +111,27 @@ Réponds UNIQUEMENT avec ce JSON valide (aucun texte avant ou après) :
 # ─── Client juge (Anthropic ou OpenAI) ──────────────────────────────────────
 
 def _build_judge_fn():
-    """Retourne une fonction call_judge(prompt_text) -> dict{pertinence, fidelite, coherence, justification}."""
-    try:
-        import anthropic
-        _client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
-        _model = "claude-haiku-4-5-20251001"
-        logger.info("judge.backend=anthropic model=%s", _model)
+    """Retourne une fonction call_judge(system, user) -> dict{pertinence, fidelite, coherence, justification}."""
+    from openai import OpenAI
+    _client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", ""))
+    _model = "gpt-4o"
+    logger.info("judge.backend=openai model=%s", _model)
 
-        def call_judge(system: str, user: str) -> dict:
-            msg = _client.messages.create(
-                model=_model,
-                max_tokens=512,
-                system=system,
-                messages=[{"role": "user", "content": user}],
-            )
-            raw = msg.content[0].text.strip()
-            return json.loads(raw)
+    def call_judge(system: str, user: str) -> dict:
+        resp = _client.chat.completions.create(
+            model=_model,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            response_format={"type": "json_object"},
+            max_tokens=512,
+            temperature=0.0,
+        )
+        raw = resp.choices[0].message.content or "{}"
+        return json.loads(raw)
 
-        return call_judge, "anthropic", _model
-
-    except (ImportError, Exception):
-        from openai import OpenAI
-        _client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", ""))
-        _model = "gpt-4o"
-        logger.info("judge.backend=openai model=%s", _model)
-
-        def call_judge(system: str, user: str) -> dict:
-            resp = _client.chat.completions.create(
-                model=_model,
-                messages=[
-                    {"role": "system", "content": system},
-                    {"role": "user", "content": user},
-                ],
-                response_format={"type": "json_object"},
-                max_tokens=512,
-                temperature=0.0,
-            )
-            raw = resp.choices[0].message.content or "{}"
-            return json.loads(raw)
-
-        return call_judge, "openai", _model
+    return call_judge, "openai", _model
 
 
 _call_judge, _JUDGE_BACKEND, _JUDGE_MODEL = _build_judge_fn()
@@ -256,6 +243,19 @@ def _judge_result(q: dict, result, memory_context: str = "Aucun") -> dict:
     }
 
 
+def _format_agent_line(result) -> str:
+    runbooks = ", ".join(result.runbooks_suggested) if result.runbooks_suggested else "aucun"
+    hint = (result.resolution_hint or "")[:120]
+    return (
+        f"{result.priority}, "
+        f"catégorie {result.category} / {result.subcategory}, "
+        f"équipe {result.assigned_to}, "
+        f"confidence {result.confidence_score:.2f}, "
+        f"runbooks [{runbooks}]. "
+        f"{hint}…"
+    )
+
+
 def _run_and_judge(q: dict, agent: Agent, memory_context: str = "Aucun") -> dict:
     """Qualifie l'incident et demande au juge de noter la réponse."""
     inc = IncidentIn(**q["incident"])
@@ -265,15 +265,18 @@ def _run_and_judge(q: dict, agent: Agent, memory_context: str = "Aucun") -> dict
     entry = {
         "id": q["id"],
         "categorie": q["categorie"],
-        "question": q["question"][:80] + "…",
+        "question": q["question"][:80] + "...",
         **scores,
         "avg": avg,
     }
     _SCORES.append(entry)
-    print(f"\n[{q['id']}] {q['categorie']} avg={avg} "
-          f"(P={scores['pertinence']} F={scores['fidelite']} C={scores['coherence']})")
-    juste = scores['justification'].encode('ascii', 'replace').decode('ascii')
-    print(f"  Juge : {juste}")
+
+    print(f"\n{q['id']}")
+    print(f"Question : {q['question']}")
+    print(f"Agent    : {_format_agent_line(result)}")
+    print(f"Juge     : [P={scores['pertinence']} F={scores['fidelite']} C={scores['coherence']} moy={avg:.2f}] "
+          f"{scores['justification']}")
+
     return entry
 
 
