@@ -5,9 +5,10 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from config import Config
+from monitoring import RequestMonitor
 from db.incidents import IncidentDB
 from memory.store import ConversationMemory, MemoryEntry
-from db.monitoring import MonitoringDB
+from db.alerts import MonitoringDB
 from db.cmdb import CMDB
 from db.models import IncidentIn, IncidentOut
 from llm import LLMClient, LLMError
@@ -35,8 +36,9 @@ class Agent:
     la traçabilité et la reproductibilité en contexte bancaire.
     """
 
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, monitor: Optional[RequestMonitor] = None):
         self.config = config
+        self.monitor = monitor
         # Couches données
         self.incident_db = IncidentDB(config.db_path)
         self.monitoring_db = MonitoringDB(config.db_path)
@@ -65,8 +67,8 @@ class Agent:
         self.tool_update = UpdateIncident(self.incident_db)
         # Audit
         self.audit = AuditLogger(config.db_path)
-        # Mémoire conversationnelle de session
         self.memory = ConversationMemory(config.max_memory)
+        self._last_rag_ms: int = 0
 
     def qualify(self, incident: IncidentIn) -> IncidentOut:
         """Point d'entrée public. Retourne un IncidentOut enrichi ou lève AgentError."""
@@ -82,9 +84,11 @@ class Agent:
             result = self._run_pipeline(incident, incident_id, request_id)
         except Exception as exc:
             self._audit_qualify_failure(incident_id, exc, start_time, request_id)
+            self._record_to_monitor(incident_id, start_time, error=str(exc))
             raise AgentError(f"Qualification échouée pour {incident_id}: {exc}") from exc
         self._audit_qualify_success(incident_id, result, start_time, request_id)
         self._add_to_memory(result, incident_id)
+        self._record_to_monitor(incident_id, start_time)
         return result
 
     def _audit_qualify_failure(
@@ -114,6 +118,23 @@ class Agent:
             "confidence=%.2f duration_ms=%d request_id=%s",
             incident_id, result.priority, result.assigned_to,
             result.confidence_score, duration_ms, request_id,
+        )
+
+    def _record_to_monitor(
+        self, incident_id: str, start_time: float, error: Optional[str] = None
+    ) -> None:
+        if not self.monitor:
+            return
+        duration_ms = int((time.monotonic() - start_time) * 1000)
+        usage = self.llm.last_usage
+        self.monitor.record(
+            incident_id=incident_id,
+            duration_ms=duration_ms,
+            prompt_tokens=usage.get("prompt_tokens", 0),
+            completion_tokens=usage.get("completion_tokens", 0),
+            error=error,
+            rag_ms=self._last_rag_ms,
+            llm_ms=self.llm.last_llm_ms,
         )
 
     def _add_to_memory(self, result: IncidentOut, incident_id: str) -> None:
@@ -186,10 +207,12 @@ class Agent:
         return cmdb_info, monitoring_info, duplicate_info, major_info
 
     def _gather_rag(self, incident: IncidentIn, request_id: str) -> tuple[list, list]:
+        t0 = time.monotonic()
         max_chars = self.config.rag_query_description_max_chars
         rag_query = f"{incident.title} {incident.description[:max_chars]} {incident.service}"
         rag_docs = self.rag.retrieve(rag_query)
         similar = self.tool_incidents.execute(incident.service, incident.title)
+        self._last_rag_ms = int((time.monotonic() - t0) * 1000)
         logger.debug("agent.step5_rag docs_retrieved=%d request_id=%s", len(rag_docs), request_id)
         logger.debug("agent.step6_similar found=%d request_id=%s", len(similar), request_id)
         return rag_docs, similar

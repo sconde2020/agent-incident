@@ -11,6 +11,7 @@ from pydantic import ValidationError
 
 from agent import Agent, AgentError
 from config import Config, setup_logging
+from monitoring import RequestMonitor
 from db.models import IncidentCreated, IncidentOut
 from security.auth import require_auth, set_api_key
 from security.input_validator import validate_incident_input
@@ -22,17 +23,18 @@ _INC_RE = re.compile(r"^INC\d{7}$")
 # ─── État global de l'application ─────────────────────────────────────────────
 _config: Optional[Config] = None
 _agent: Optional[Agent] = None
-_metrics: dict = {"qualifications": 0, "errors": 0, "total_latency_ms": 0}
+_monitor: Optional[RequestMonitor] = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialisation au démarrage, nettoyage à l'arrêt."""
-    global _config, _agent
+    global _config, _agent, _monitor
     _config = Config()
     setup_logging(_config)
     set_api_key(_config.api_key)
-    _agent = Agent(_config)
+    _monitor = RequestMonitor(model=_config.llm_model)
+    _agent = Agent(_config, monitor=_monitor)
     logger.info("api.startup model=%s host=%s port=%d", _config.llm_model, _config.api_host, _config.api_port)
     yield
     logger.info("api.shutdown")
@@ -110,17 +112,11 @@ async def qualify_incident(request: Request, payload: dict) -> IncidentOut:
         logger.warning("api.qualify.validation_error errors=%s request_id=%s", exc, request_id)
         raise HTTPException(status_code=422, detail=exc.errors())
 
-    start = time.monotonic()
     try:
         result = _agent.qualify(validated)
     except AgentError as exc:
-        _metrics["errors"] += 1
         logger.error("api.qualify.agent_error error=%s request_id=%s", exc, request_id)
         raise HTTPException(status_code=500, detail="Erreur interne de l'agent")
-
-    duration_ms = int((time.monotonic() - start) * 1000)
-    _metrics["qualifications"] += 1
-    _metrics["total_latency_ms"] += duration_ms
 
     return result
 
@@ -169,14 +165,9 @@ async def health_check() -> dict:
 
 @app.get("/metrics", dependencies=[Depends(require_auth)])
 async def get_metrics() -> dict:
-    """Métriques de l'agent : nombre de qualifications, erreurs, latence moyenne."""
-    total = _metrics["qualifications"]
-    avg_latency = _metrics["total_latency_ms"] // total if total > 0 else 0
-    return {
-        "qualifications_total": total,
-        "errors_total": _metrics["errors"],
-        "avg_latency_ms": avg_latency,
-    }
+    """Métriques de l'agent : qualifications, erreurs, latence, tokens, coût estimé."""
+    assert _monitor is not None
+    return _monitor.get_stats()
 
 
 # ─── Gestionnaire d'erreurs global ────────────────────────────────────────────

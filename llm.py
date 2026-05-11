@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 from typing import Optional
 
 from openai import OpenAI, OpenAIError
@@ -20,6 +21,8 @@ class LLMClient:
     def __init__(self, config: Config):
         self.config = config
         self.client = OpenAI(api_key=config.openai_api_key)
+        self.last_usage: dict = {}
+        self.last_llm_ms: int = 0
 
     def classify(self, incident: dict, context: dict) -> dict:
         """
@@ -29,9 +32,15 @@ class LLMClient:
         incident_id = incident.get("id", "?")
         logger.info("llm.classify.start incident_id=%s model=%s", incident_id, self.config.llm_model)
         prompt = self._build_prompt(incident, context)
+        t0 = time.monotonic()
         response = self._call_api(prompt, incident_id)
+        self.last_llm_ms = int((time.monotonic() - t0) * 1000)
         result = self._parse_json(response.choices[0].message.content or "{}", incident_id)
         self._log_classify_done(incident_id, result, response.usage)
+        self.last_usage = {
+            "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
+            "completion_tokens": response.usage.completion_tokens if response.usage else 0,
+        }
         return result
 
     def _build_prompt(self, incident: dict, context: dict) -> str:
