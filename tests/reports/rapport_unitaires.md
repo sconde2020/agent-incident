@@ -1,8 +1,8 @@
 # Rapport — Tests unitaires
 
-**Date :** 2026-05-08  
+**Date :** 2026-05-11  
 **Resultat :** OK — 131 passed · 0 failed · 0 skipped  
-**Duree :** 0.50 s
+**Duree :** 1212295.05 s
 
 | Classe | Passes | Echoues | Sautes |
 |--------|:------:|:-------:|:------:|

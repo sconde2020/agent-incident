@@ -3,6 +3,7 @@
     "id": "Q01",
     "question": "SWIFTNet est inaccessible : aucune session FIN active sur swift-gateway depuis 35 minutes, tous les MT103 sortants sont bloqués en file d'attente fin-processor.",
     "incident": {
+      "id": "INC0002001",
       "title": "SWIFTNet FIN indisponible – aucune session active sur swift-gateway",
       "description": "Aucune session FIN active depuis 08h10. Alerte SWIFTNet FIN connectivity lost déclenchée. Tous les messages MT103 et MT202 sortants sont bloqués en file d'attente fin-processor. SWIFT Alliance Access retourne SESSION_TIMEOUT. Tableau de bord monitoring : fin_sessions_active = 0.",
       "service": "swift-gateway"
@@ -15,6 +16,7 @@
     "id": "Q02",
     "question": "Alerte : le certificat PKI de SWIFT Alliance Access expire dans 4 jours. Aucun paiement actuellement bloqué.",
     "incident": {
+      "id": "INC0002002",
       "title": "Expiration imminente certificat PKI SWIFTNet – J-4",
       "description": "Une alerte de surveillance a détecté que le certificat PKI d'authentification SWIFTNet sur SWIFT Alliance Access arrive à expiration dans 4 jours (le 11 mai 2026). Aucune session FIN actuellement coupée, les paiements transitent normalement. Renouvellement doit être effectué avant expiration pour éviter une coupure SWIFTNet.",
       "service": "swift-alliance"
@@ -27,6 +29,7 @@
     "id": "Q03",
     "question": "Incident multi-dimensionnel : le service nostro-reconciliation affiche un écart non réconcilié de 180 000 € sur le compte Deutsche Bank, et en amont fin-processor accumule un backlog de 350 messages MT940 non traités depuis 2 heures.",
     "incident": {
+      "id": "INC0002003",
       "title": "Écart nostro 180K€ Deutsche Bank + backlog MT940 fin-processor non résolu",
       "description": "La réconciliation EOD du compte nostro Deutsche Bank (DEUTDEDB) présente un écart de 180 000 € non réconcilié depuis le traitement de 16h00. En parallèle, fin-processor signale un backlog de 350 messages MT940 et MT950 en attente de parsing depuis 2h30. Les deux anomalies semblent liées : les relevés MT940 non traités empêchent la clôture de la réconciliation. Impact potentiel sur le calcul de liquidité en fin de journée.",
       "service": "nostro-reconciliation"
@@ -39,6 +42,7 @@
     "id": "Q04",
     "question": "Signalement vague : 'une erreur sur les paiements, les clients se plaignent'. Aucune métrique ni log fourni.",
     "incident": {
+      "id": "INC0002004",
       "title": "Erreur signalée sur les paiements – plaintes clients non qualifiées",
       "description": "Signalement reçu par le helpdesk : plusieurs clients se plaignent d'erreurs sur les paiements depuis ce matin. Aucun log, aucune métrique, aucun code d'erreur fourni. L'équipe support ne sait pas si c'est côté mobile, web ou API. Pas d'information sur le nombre de clients impactés.",
       "service": "payment-hub"
@@ -51,6 +55,7 @@
     "id": "Q05",
     "question": "L'imprimante de la comptabilité est en panne : bac papier vide et toner épuisé.",
     "incident": {
+      "id": "INC0002005",
       "title": "Panne imprimante service comptabilité – bac papier vide, toner épuisé",
       "description": "L'imprimante HP LaserJet M428fdw du service comptabilité (bureau 214) ne fonctionne plus depuis ce matin. Le bac papier est vide et le toner indique 0%. Les collaborateurs ne peuvent plus imprimer leurs documents. Demande d'intervention urgente au service IT.",
       "service": "support-helpdesk"
@@ -63,6 +68,7 @@
     "id": "Q06",
     "question": "Tentatives d'accès non autorisé détectées sur le HSM de SWIFT Alliance Access en pleine nuit.",
     "incident": {
+      "id": "INC0002006",
       "title": "Accès non autorisé HSM swift-alliance – 23 tentatives entre 03h00 et 03h45",
       "description": "Les logs de sécurité de SWIFT Alliance Access signalent 23 tentatives de connexion échouées sur le module HSM (Hardware Security Module) entre 03h00 et 03h45, provenant de l'adresse IP 10.0.15.42 non répertoriée. Les credentials utilisés ne correspondent à aucun compte d'exploitation connu. Aucune session n'a été établie, mais l'activité anormale persiste. Le HSM gère la signature cryptographique de tous les messages SWIFT sortants.",
       "service": "swift-alliance"
@@ -75,6 +81,7 @@
     "id": "Q07",
     "question": "Le reporter déclare 'URGENCE ABSOLUE P1 CRITIQUE' mais les détails révèlent seulement 5 messages MT103 rejetés pour une seule contrepartie.",
     "incident": {
+      "id": "INC0002007",
       "title": "URGENCE P1 CRITIQUE – Paiements SWIFT bloqués !!! Intervention immédiate requise",
       "description": "INCIDENT P1 CRITIQUE URGENT !! Des paiements SWIFT sont bloqués !! Le correspondant HSBC-UK (BIC HBUKGB4B) refuse 5 messages MT103 avec le code INVALID_ACCOUNT. Les paiements concernent une seule contrepartie pour des montants entre 10 000€ et 25 000€. L'équipe commerciale exige une résolution IMMÉDIATE car le client est important. Tout arrêter pour traiter en priorité.",
       "service": "fin-processor"
@@ -87,6 +94,7 @@
     "id": "Q08",
     "question": "Le batch cut-off de fin de journée a échoué à 17h05 avec une erreur DB_CONNECTION_FAILED : 280 paiements SWIFT non émis.",
     "incident": {
+      "id": "INC0002008",
       "title": "Échec batch EOD cut-off 17h00 – DB_CONNECTION_FAILED, 280 paiements non émis",
       "description": "Le cut-off-manager a échoué à déclencher le batch de fin de journée à 17h05 avec l'erreur DB_CONNECTION_FAILED vers swift-messages-db. 280 paiements SWIFT en statut QUEUED n'ont pas été émis sur le réseau SWIFT avant le cut-off officiel de Paris. Une relance manuelle a également échoué avec la même erreur. swift-messages-db indique un failover récent du master vers le replica à 16h52.",
       "service": "cut-off-manager"
@@ -99,11 +107,13 @@
     "id": "Q09",
     "question": "Deuxième incident gpi-tracker en moins d'une heure dans la même session : confirmations CAMT.054 non émises depuis 45 minutes.",
     "incident": {
+      "id": "INC0002009",
       "title": "gpi-tracker – Confirmations CAMT.054 non transmises depuis 45 min (2e incident)",
       "description": "Le service gpi-tracker ne transmet plus les confirmations CAMT.054 aux banques correspondantes depuis 45 minutes. Les statuts UETR restent en ACSP au lieu de passer en ACCC après crédit. Environ 180 transactions gpi en attente de confirmation. Ce dysfonctionnement survient moins d'une heure après un premier incident de timeout sur ce même service.",
       "service": "gpi-tracker"
     },
     "pre_incident": {
+      "id": "INC0002019",
       "title": "gpi-tracker – Timeouts ACK sur confirmations gpi depuis 20 minutes",
       "description": "Le service gpi-tracker accumule des timeouts lors de la transmission des ACK de confirmation gpi. 45 transactions UETR n'ont pas reçu de confirmation dans le délai SLA de 30 minutes. Les statuts restent bloqués en ACSP. Redémarrage de la file d'attente recommandé.",
       "service": "gpi-tracker"
@@ -116,6 +126,7 @@
     "id": "Q10",
     "question": "Le validateur BIC refuse 120 paiements en validant incorrectement des BIC comme invalides alors qu'ils sont actifs dans le répertoire officiel SWIFT.",
     "incident": {
+      "id": "INC0002010",
       "title": "bic-validator – 120 paiements rejetés avec BIC_INVALID_FORMAT sur des BIC pourtant valides",
       "description": "Depuis 10h30, le service bic-validator rejette des BIC avec le code BIC_INVALID_FORMAT pour des codes pourtant référencés dans le répertoire officiel SWIFT (ex: DEUTDEDB, BNPAFRPP, SOGEFRPP). 120 ordres de paiement SWIFT ont été bloqués en amont par payment-hub. L'équipe commerciale confirme que ces BIC sont actifs et valides. Suspicion d'un problème de cache Redis ou d'une mise à jour BIC incorrecte.",
       "service": "bic-validator"
@@ -128,6 +139,7 @@
     "id": "Q11",
     "question": "Une alerte de surveillance détecte une anomalie de puissance électrique dans la salle serveurs SWIFT : l'onduleur UPS-SWIFT-01 est en mode batterie depuis 8 minutes.",
     "incident": {
+      "id": "INC0002011",
       "title": "Onduleur UPS-SWIFT-01 en mode batterie depuis 8 minutes – salle serveurs SWIFT",
       "description": "L'outil de supervision datacenter signale que l'onduleur UPS-SWIFT-01 qui alimente la salle serveurs hébergeant swift-alliance, swift-gateway et fin-processor est passé en mode batterie à 14h22 suite à une micro-coupure secteur. L'autonomie estimée est de 12 minutes supplémentaires. Si le secteur ne revient pas ou que le groupe électrogène ne démarre pas, tous les services SWIFT critiques seront hors ligne dans moins de 15 minutes.",
       "service": "infrastructure-monitoring"

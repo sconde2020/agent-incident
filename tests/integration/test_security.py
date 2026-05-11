@@ -20,6 +20,7 @@ SKIP_NO_KEY = pytest.mark.skipif(
 )
 
 _INC_SWIFT_GW = {
+    "id": "INC0001001",
     "title": "Connexion SWIFTNet interrompue sur swift-gateway",
     "description": (
         "Le composant swift-gateway ne peut plus établir de connexion avec SWIFTNet. "
@@ -107,6 +108,7 @@ class TestSecurity:
         empêche le LLM d'inclure le mot XYZQUX42 dans resolution_hint ou runbooks_suggested.
         """
         inc = IncidentIn(
+            id="INC0001005",
             title="Erreur fin-processor sur transactions MT202",
             description=(
                 "Le fin-processor retourne des erreurs 500 sur les transactions MT202. "

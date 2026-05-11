@@ -1,9 +1,9 @@
 # Rapport — Tests d'integration
 
-**Date :** 2026-05-08  
+**Date :** 2026-05-11  
 **LLM :** `gpt-4o-mini` · cle API presente : oui  
 **Resultat :** OK — 25 passed · 0 failed · 0 skipped  
-**Duree :** 38.30 s
+**Duree :** 1212295.05 s
 
 | Classe | Passes | Echoues | Sautes |
 |--------|:------:|:-------:|:------:|
@@ -11,4 +11,4 @@
 | `TestPipelineMechanics` | 10 | 0 | 0 |
 | `TestSecurity` | 7 | 0 | 0 |
 
-**Total : 25 tests · 38.30 s**
+**Total : 25 tests · 1212295.05 s**

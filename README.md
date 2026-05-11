@@ -150,7 +150,7 @@ Authentification : `Authorization: Bearer <API_KEY>`
 **Exemple avec curl :**
 ```bash
 curl -X POST http://localhost:8080/qualify \
-  -H "Authorization: Bearer <API_KEY>" \
+  -H "Authorization: Bearer ${API_KEY}" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "File FIN saturée – MT103 non traités",
@@ -177,7 +177,8 @@ docker build -f docker/Dockerfile -t agent-incident .
 ```bash
 docker run -d \
   --name agent-incident \
-  -p 8000:8000 \
+  -e API_PORT=8080 \
+  -p 8080:8080 \
   -v incident-data:/data \
   -e OPENAI_API_KEY=$OPENAI_API_KEY \
   -e API_KEY=$API_KEY \
@@ -250,6 +251,18 @@ python -m pytest tests/quality/test_quality.py -v -s
 ```
 
 Score cible : ≥ 3.5 / 5.0 globalement, ≥ 3.0 par question.
+
+### Tests de performance (end-to-end)
+
+Exécute 25 × `POST /create` + `POST /qualify` et met à jour la section métriques de `demo.md`.
+
+```bash
+python main.py init                       # initialise la DB et le RAG
+python main.py serve --port 8080 &       # serveur en arrière-plan
+python test_performance.py               # lance le benchmark
+```
+
+> Option : `python test_performance.py --url http://host:port` si le serveur tourne ailleurs.
 
 ### Tout lancer
 

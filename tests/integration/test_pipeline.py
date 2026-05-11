@@ -20,6 +20,7 @@ SKIP_NO_KEY = pytest.mark.skipif(
 )
 
 _INC_SWIFT_GW = {
+    "id": "INC0001001",
     "title": "Connexion SWIFTNet interrompue sur swift-gateway",
     "description": (
         "Le composant swift-gateway ne peut plus établir de connexion avec SWIFTNet. "
@@ -30,6 +31,7 @@ _INC_SWIFT_GW = {
 }
 
 _INC_PAYMENT_HUB = {
+    "id": "INC0001002",
     "title": "Payment-hub inaccessible — timeout sur toutes les routes HTTP",
     "description": (
         "Le service payment-hub retourne HTTP 503 sur l'ensemble des routes. "
@@ -40,6 +42,7 @@ _INC_PAYMENT_HUB = {
 }
 
 _INC_UNKNOWN_SVC = {
+    "id": "INC0001003",
     "title": "Anomalie de traitement sur service non référencé",
     "description": (
         "Le composant legacy-processor rencontre des erreurs de traitement "
@@ -49,6 +52,7 @@ _INC_UNKNOWN_SVC = {
 }
 
 _INC_OUT_OF_DOMAIN = {
+    "id": "INC0001004",
     "title": "Imprimante du bureau hors service depuis ce matin",
     "description": (
         "L'imprimante HP LaserJet du bureau des ressources humaines ne fonctionne plus. "

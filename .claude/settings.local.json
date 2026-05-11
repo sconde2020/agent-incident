@@ -23,7 +23,10 @@
       "PowerShell(Move-Item \"c:\\\\Users\\\\admin\\\\openai\\\\agent-incident\\\\tests\\\\rapport_unitaires.md\" \"c:\\\\Users\\\\admin\\\\openai\\\\agent-incident\\\\tests\\\\reports\\\\rapport_unitaires.md\" -Force)",
       "PowerShell(Move-Item \"c:\\\\Users\\\\admin\\\\openai\\\\agent-incident\\\\tests\\\\rapport_integration.md\" \"c:\\\\Users\\\\admin\\\\openai\\\\agent-incident\\\\tests\\\\reports\\\\rapport_integration.md\" -Force)",
       "Bash(python -c \"import json; q=[x for x in json.load\\(open\\('tests/questions.json', encoding='utf-8'\\)\\) if x['id']=='Q06'][0]; print\\(json.dumps\\(q, indent=2, ensure_ascii=False\\)\\)\")",
-      "Bash(dir docs *)"
+      "Bash(dir docs *)",
+      "Bash(python -m pytest tests/integration/ tests/quality/test_quality.py -x --ignore=tests/quality/test_quality.py -q --no-header)",
+      "Bash(python -m pytest tests/integration/ -k \"not \\(SKIP_NO_KEY or test_full_pipeline or test_cmdb_tool or test_monitoring_tool or test_unknown_service or test_payment_service or test_out_of_domain or test_pipeline_response or test_memory_grows or test_memory_contains or test_memory_context or test_memory_truncated or test_oldest_entry or test_memory_clear or test_llm_structured\\)\" -v --no-header)",
+      "Bash(python -m pytest tests/unit/ -q --no-header)"
     ]
   }
 }

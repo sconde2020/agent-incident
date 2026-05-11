@@ -20,6 +20,20 @@ logger = logging.getLogger(__name__)
 
 _INC_RE = re.compile(r"^INC\d{7}$")
 
+
+def _format_validation_errors(exc: ValidationError) -> list[dict]:
+    """Formater les erreurs Pydantic v2 en objets JSON-sérialisables."""
+    result = []
+    for e in exc.errors(include_url=False):
+        msg = e["msg"]
+        if msg.startswith("Value error, "):
+            msg = msg[len("Value error, "):]
+        result.append({
+            "champ": ".".join(str(loc) for loc in e["loc"]) or "body",
+            "message": msg,
+        })
+    return result
+
 # ─── État global de l'application ─────────────────────────────────────────────
 _config: Optional[Config] = None
 _agent: Optional[Agent] = None
@@ -110,7 +124,7 @@ async def qualify_incident(request: Request, payload: dict) -> IncidentOut:
         validated = validate_incident_input(raw)
     except ValidationError as exc:
         logger.warning("api.qualify.validation_error errors=%s request_id=%s", exc, request_id)
-        raise HTTPException(status_code=422, detail=exc.errors())
+        raise HTTPException(status_code=422, detail=_format_validation_errors(exc))
 
     try:
         result = _agent.qualify(validated)
@@ -130,7 +144,7 @@ async def create_incident(request: Request, payload: dict) -> IncidentCreated:
         validated = validate_incident_input(payload)
     except ValidationError as exc:
         logger.warning("api.create.validation_error errors=%s request_id=%s", exc, request_id)
-        raise HTTPException(status_code=422, detail=exc.errors())
+        raise HTTPException(status_code=422, detail=_format_validation_errors(exc))
 
     try:
         created = _agent.incident_db.create(validated.model_dump(exclude_none=False))

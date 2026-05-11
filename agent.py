@@ -1,7 +1,6 @@
 import logging
 import time
 import uuid
-from datetime import datetime, timezone
 from typing import Optional
 
 from config import Config
@@ -74,8 +73,10 @@ class Agent:
         """Point d'entrée public. Retourne un IncidentOut enrichi ou lève AgentError."""
         request_id = str(uuid.uuid4())[:8]
         start_time = time.monotonic()
-        # Générer un ID si l'incident n'en a pas (cas payload JSON inline)
-        incident_id = incident.id or f"INC{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
+        self.llm.last_llm_ms = 0
+        self.llm.last_usage = {}
+        incident_id = incident.id
+        assert incident_id
         logger.info(
             "agent.qualify.start incident_id=%s service=%s request_id=%s",
             incident_id, incident.service, request_id,
@@ -193,7 +194,7 @@ class Agent:
     ) -> tuple[dict, dict, dict, dict]:
         cmdb_info = self.tool_cmdb.execute(incident.service)
         monitoring_info = self.tool_monitoring.execute(incident.service)
-        duplicate_info = self.tool_duplicate.execute(incident.service, incident.title)
+        duplicate_info = self.tool_duplicate.execute(incident.service, incident.title, exclude_id=incident.id)
         dependencies = (
             cmdb_info.get("dependencies", [])
             if isinstance(cmdb_info, dict) and not cmdb_info.get("error")

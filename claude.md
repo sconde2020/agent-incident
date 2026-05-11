@@ -22,6 +22,16 @@ python main.py serve --port 8080 --reload   # serveur HTTP dev
 python main.py qualify --id INC0002001
 ```
 
+### Tests de performance
+
+```bash
+python main.py init                          # (ré)initialise la DB et le RAG
+python main.py serve --port 8080 &          # serveur en arrière-plan
+python test_performance.py                  # 25 × POST /create + POST /qualify, met à jour demo.md
+```
+
+> `test_performance.py` accepte `--url http://host:port` si le serveur tourne sur un autre port.
+
 ---
 
 ## Architecture et responsabilités

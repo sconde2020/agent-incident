@@ -16,6 +16,7 @@ SKIP_NO_KEY = pytest.mark.skipif(
 )
 
 _INC_SWIFT_GW = {
+    "id": "INC0001001",
     "title": "Connexion SWIFTNet interrompue sur swift-gateway",
     "description": (
         "Le composant swift-gateway ne peut plus établir de connexion avec SWIFTNet. "
@@ -26,6 +27,7 @@ _INC_SWIFT_GW = {
 }
 
 _INC_PAYMENT_HUB = {
+    "id": "INC0001002",
     "title": "Payment-hub inaccessible — timeout sur toutes les routes HTTP",
     "description": (
         "Le service payment-hub retourne HTTP 503 sur l'ensemble des routes. "
